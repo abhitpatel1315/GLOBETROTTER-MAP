@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Explore Incredible India</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, Helvetica, sans-serif;
+    background:#f5f7fb;
+    color:#222;
+}
+
+header{
+    background:linear-gradient(135deg,#ff7a00,#ff3d00);
+    color:white;
+    padding:30px 20px;
+    text-align:center;
+}
+
+header h1{
+    font-size:42px;
+    margin-bottom:10px;
+}
+
+header p{
+    font-size:18px;
+    opacity:.95;
+}
+
+.search-box{
+    max-width:900px;
+    margin:25px auto;
+    display:flex;
+    gap:10px;
+    padding:0 15px;
+}
+
+.search-box input{
+    flex:1;
+    padding:17px;
+    border:none;
+    border-radius:10px;
+    font-size:17px;
+    box-shadow:0 4px 15px rgba(0,0,0,.12);
+}
+
+.search-box button{
+    padding:0 28px;
+    border:none;
+    border-radius:10px;
+    background:#111827;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.search-box button:hover{
+    background:#000;
+}
+
+.suggestions{
+    max-width:870px;
+    margin:-18px auto 20px;
+    background:white;
+    border-radius:10px;
+    box-shadow:0 5px 20px rgba(0,0,0,.15);
+    overflow:hidden;
+    display:none;
+    position:relative;
+    z-index:9999;
+}
+
+.suggestion{
+    padding:13px 18px;
+    cursor:pointer;
+    border-bottom:1px solid #eee;
+}
+
+.suggestion:hover{
+    background:#f3f4f6;
+}
+
+.suggestion small{
+    color:#777;
+    display:block;
+    margin-top:3px;
+}
+
+.container{
+    max-width:1400px;
+    margin:auto;
+    padding:20px;
+}
+
+.quick-title{
+    text-align:center;
+    margin-bottom:15px;
+}
+
+.quick-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+    margin-bottom:25px;
+}
+
+.quick-buttons button{
+    border:none;
+    padding:10px 16px;
+    border-radius:20px;
+    background:white;
+    box-shadow:0 3px 10px rgba(0,0,0,.1);
+    cursor:pointer;
+}
+
+.quick-buttons button:hover{
+    background:#ff7a00;
+    color:white;
+}
+
+.info{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    margin-bottom:20px;
+    box-shadow:0 5px 20px rgba(0,0,0,.08);
+}
+
+.info h2{
+    color:#ff5a00;
+    margin-bottom:10px;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+    margin-top:20px;
+}
+
+.stat{
+    background:#f8fafc;
+    padding:18px;
+    text-align:center;
+    border-radius:12px;
+}
+
+.stat strong{
+    display:block;
+    font-size:25px;
+    color:#ff5a00;
+}
+
+.stat span{
+    color:#666;
+    font-size:14px;
+}
+
+.filters{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+
+.filter{
+    border:1px solid #ddd;
+    padding:10px 18px;
+    background:white;
+    border-radius:20px;
+    cursor:pointer;
+}
+
+.filter.active,
+.filter:hover{
+    background:#ff6500;
+    color:white;
+    border-color:#ff6500;
+}
+
+#map{
+    height:500px;
+    border-radius:15px;
+    margin-bottom:30px;
+    box-shadow:0 5px 20px rgba(0,0,0,.12);
+}
+
+.section-title{
+    margin-bottom:20px;
+}
+
+.places{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:22px;
+}
+
+.card{
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 5px 18px rgba(0,0,0,.1);
+    transition:.2s;
+}
+
+.card:hover{
+    transform:translateY(-5px);
+}
+
+.card img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+    background:#eee;
+}
+
+.card-content{
+    padding:18px;
+}
+
+.card h3{
+    margin-bottom:8px;
+    color:#222;
+}
+
+.badge{
+    display:inline-block;
+    background:#fff0e6;
+    color:#ff5a00;
+    padding:5px 9px;
+    border-radius:12px;
+    font-size:12px;
+    margin-bottom:10px;
+}
+
+.card p{
+    color:#666;
+    line-height:1.5;
+    font-size:14px;
+}
+
+.card-buttons{
+    display:flex;
+    gap:8px;
+    margin-top:15px;
+}
+
+.card-buttons a,
+.card-buttons button{
+    flex:1;
+    padding:10px;
+    text-align:center;
+    border:none;
+    border-radius:8px;
+    text-decoration:none;
+    cursor:pointer;
+    font-size:13px;
+}
+
+.view-map{
+    background:#111827;
+    color:white;
+}
+
+.wikipedia{
+    background:#eee;
+    color:#222;
+}
+
+.loading{
+    text-align:center;
+    padding:50px;
+    color:#777;
+    font-size:18px;
+}
+
+.error{
+    background:#fff0f0;
+    color:#b00020;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
+
+footer{
+    text-align:center;
+    padding:30px;
+    margin-top:40px;
+    background:#111827;
+    color:white;
+}
+
+@media(max-width:700px){
+    header h1{
+        font-size:30px;
+    }
+
+    .search-box{
+        flex-direction:column;
+    }
+
+    .search-box button{
+        padding:15px;
+    }
+
+    .stats{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    #map{
+        height:400px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>🇮🇳 Explore Incredible India</h1>
+    <p>Search any State, Union Territory, City or Tourist Place</p>
+
+    <div class="search-box">
+        <input
+            id="searchInput"
+            type="text"
+            placeholder="Search Gujarat, Rajasthan, Ahmedabad, Jaipur, Mumbai..."
+            autocomplete="off"
+        >
+        <button onclick="searchLocation()">🔍 Search</button>
+    </div>
+
+    <div id="suggestions" class="suggestions"></div>
+</header>
+
+<div class="container">
+
+    <h3 class="quick-title">Popular Searches</h3>
+
+    <div class="quick-buttons" id="quickButtons"></div>
+
+    <div id="mainInfo"></div>
+
+    <div class="filters">
+        <button class="filter active" onclick="filterPlaces('All',this)">All</button>
+        <button class="filter" onclick="filterPlaces('Historical',this)">🏰 Historical</button>
+        <button class="filter" onclick="filterPlaces('Religious',this)">🛕 Religious</button>
+        <button class="filter" onclick="filterPlaces('Nature',this)">🌿 Nature</button>
+        <button class="filter" onclick="filterPlaces('Beach',this)">🏖️ Beach</button>
+        <button class="filter" onclick="filterPlaces('Wildlife',this)">🐅 Wildlife</button>
+        <button class="filter" onclick="filterPlaces('Museum',this)">🏛️ Museum</button>
+    </div>
+
+    <div id="map"></div>
+
+    <h2 class="section-title" id="placesTitle">
+        Famous Places
+    </h2>
+
+    <div id="places" class="places"></div>
+
+</div>
+
+<footer>
+    <p>🇮🇳 Incredible India Tourism Explorer</p>
+    <p style="margin-top:8px;font-size:13px;">
+        Maps: OpenStreetMap + Leaflet |
+        Photos/Articles: Wikimedia Commons + Wikipedia |
+        City Search: OpenStreetMap Nominatim
+    </p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+/* =========================================================
+   INDIA STATES + UNION TERRITORIES
+   ========================================================= */
+
+const regions = {
+
+"Andhra Pradesh":{
+    type:"State",
+    capital:"Amaravati",
+    cities:["Visakhapatnam","Vijayawada","Tirupati","Guntur","Nellore","Kurnool","Rajahmundry","Kakinada"],
+    places:[
+        ["Tirumala Venkateswara Temple","Religious",13.6833,79.3472],
+        ["Araku Valley","Nature",18.3273,82.8775],
+        ["Borra Caves","Nature",18.2814,83.0486],
+        ["Visakhapatnam Beach","Beach",17.6868,83.2185],
+        ["Kondapalli Fort","Historical",16.6170,80.5414],
+        ["Amaravati Stupa","Historical",16.5720,80.3575]
+    ]
+},
+
+"Arunachal Pradesh":{
+    type:"State",
+    capital:"Itanagar",
+    cities:["Itanagar","Tawang","Bomdila","Ziro","Pasighat","Naharlagun","Tezu","Along"],
+    places:[
+        ["Tawang Monastery","Religious",27.5861,91.8594],
+        ["Sela Pass","Nature",27.5050,92.1020],
+        ["Ziro Valley","Nature",27.5430,93.8310],
+        ["Namdapha National Park","Wildlife",27.4930,96.3880],
+        ["Bomdila","Nature",27.2645,92.4246]
+    ]
+},
+
+"Assam":{
+    type:"State",
+    capital:"Dispur",
+    cities:["Guwahati","Dibrugarh","Silchar","Jorhat","Tezpur","Nagaon","Sivasagar","Tinsukia"],
+    places:[
+        ["Kaziranga National Park","Wildlife",26.5775,93.1711],
+        ["Kamakhya Temple","Religious",26.1664,91.7055],
+        ["Majuli Island","Nature",27.0016,94.2257],
+        ["Sivasagar Sivadol","Historical",26.9845,94.6371],
+        ["Manas National Park","Wildlife",26.6590,91.0011],
+        ["Umananda Temple","Religious",26.1890,91.7420]
+    ]
+},
+
+"Bihar":{
+    type:"State",
+    capital:"Patna",
+    cities:["Patna","Gaya","Bodh Gaya","Bhagalpur","Muzaffarpur","Darbhanga","Nalanda","Rajgir"],
+    places:[
+        ["Mahabodhi Temple","Religious",24.6961,84.9914],
+        ["Nalanda Mahavihara","Historical",25.1367,85.4431],
+        ["Rajgir","Historical",25.0280,85.4200],
+        ["Golghar","Historical",25.5941,85.1376],
+        ["Vikramshila Ruins","Historical",25.3425,87.2880],
+        ["Valmiki National Park","Wildlife",27.3275,84.6750]
+    ]
+},
+
+"Chhattisgarh":{
+    type:"State",
+    capital:"Raipur",
+    cities:["Raipur","Bhilai","Bilaspur","Korba","Jagdalpur","Durg","Ambikapur","Rajnandgaon"],
+    places:[
+        ["Chitrakote Waterfall","Nature",19.2060,81.6990],
+        ["Tirathgarh Waterfall","Nature",18.9320,81.9150],
+        ["Bhoramdeo Temple","Religious",22.1000,81.2150],
+        ["Barnawapara Wildlife Sanctuary","Wildlife",21.0800,82.5600],
+        ["Sirpur","Historical",21.5100,82.1900]
+    ]
+},
+
+"Goa":{
+    type:"State",
+    capital:"Panaji",
+    cities:["Panaji","Vasco da Gama","Margao","Mapusa","Ponda","Calangute","Candolim","Anjuna"],
+    places:[
+        ["Baga Beach","Beach",15.5557,73.7517],
+        ["Calangute Beach","Beach",15.5440,73.7550],
+        ["Basilica of Bom Jesus","Religious",15.5009,73.9110],
+        ["Fort Aguada","Historical",15.4920,73.7730],
+        ["Dudhsagar Falls","Nature",15.3144,74.3144],
+        ["Anjuna Beach","Beach",15.5736,73.7400]
+    ]
+},
+
+"Gujarat":{
+    type:"State",
+    capital:"Gandhinagar",
+    cities:["Ahmedabad","Surat","Vadodara","Rajkot","Bhavnagar","Jamnagar","Junagadh","Dwarka","Somnath","Gandhinagar","Bhuj","Patan"],
+    places:[
+        ["Statue of Unity","Historical",21.8380,73.7191],
+        ["Somnath Temple","Religious",20.8880,70.4010],
+        ["Dwarkadhish Temple","Religious",22.2376,68.9674],
+        ["Rani ki Vav","Historical",23.8589,72.1015],
+        ["Sabarmati Ashram","Historical",23.0607,72.5800],
+        ["Gir National Park","Wildlife",21.1240,70.8242],
+        ["White Rann of Kutch","Nature",23.7337,69.8597],
+        ["Adalaj Stepwell","Historical",23.1688,72.5814]
+    ]
+},
+
+"Haryana":{
+    type:"State",
+    capital:"Chandigarh",
+    cities:["Gurugram","Faridabad","Panipat","Ambala","Hisar","Karnal","Kurukshetra","Rohtak"],
+    places:[
+        ["Kurukshetra","Historical",29.9695,76.8783],
+        ["Sultanpur National Park","Wildlife",28.4610,76.8930],
+        ["Pinjore Gardens","Nature",30.7960,76.9180],
+        ["Brahma Sarovar","Religious",29.9680,76.8320],
+        ["Panipat Museum","Museum",29.3909,76.9635]
+    ]
+},
+
+"Himachal Pradesh":{
+    type:"State",
+    capital:"Shimla",
+    cities:["Shimla","Manali","Dharamshala","Kullu","Mandi","Dalhousie","Kasol","Kasauli","Solan"],
+    places:[
+        ["Shimla","Nature",31.1048,77.1734],
+        ["Manali","Nature",32.2432,77.1892],
+        ["Rohtang Pass","Nature",32.3726,77.2485],
+        ["Dharamshala","Nature",32.2190,76.3234],
+        ["Dalhousie","Nature",32.5387,75.9700],
+        ["Spiti Valley","Nature",32.2460,78.0349]
+    ]
+},
+
+"Jharkhand":{
+    type:"State",
+    capital:"Ranchi",
+    cities:["Ranchi","Jamshedpur","Dhanbad","Bokaro","Deoghar","Hazaribagh","Giridih","Dumka"],
+    places:[
+        ["Dassam Falls","Nature",23.4310,85.4600],
+        ["Hundru Falls","Nature",23.4450,85.5940],
+        ["Baidyanath Temple","Religious",24.4921,86.6953],
+        ["Betla National Park","Wildlife",23.8700,84.1900],
+        ["Jagannath Temple Ranchi","Religious",23.3441,85.3096]
+    ]
+},
+
+"Karnataka":{
+    type:"State",
+    capital:"Bengaluru",
+    cities:["Bengaluru","Mysuru","Mangaluru","Hubballi","Belagavi","Hampi","Coorg","Udupi","Shivamogga"],
+    places:[
+        ["Mysore Palace","Historical",12.3052,76.6552],
+        ["Hampi","Historical",15.3350,76.4600],
+        ["Coorg","Nature",12.3375,75.8069],
+        ["Gokarna Beach","Beach",14.5495,74.3197],
+        ["Jog Falls","Nature",14.2290,74.8060],
+        ["Bengaluru Palace","Historical",12.9980,77.5920]
+    ]
+},
+
+"Kerala":{
+    type:"State",
+    capital:"Thiruvananthapuram",
+    cities:["Thiruvananthapuram","Kochi","Kozhikode","Alappuzha","Kollam","Thrissur","Munnar","Varkala","Kumarakom"],
+    places:[
+        ["Munnar","Nature",10.0889,77.0595],
+        ["Alleppey Backwaters","Nature",9.4981,76.3388],
+        ["Varkala Beach","Beach",8.7379,76.7163],
+        ["Fort Kochi","Historical",9.9658,76.2420],
+        ["Periyar National Park","Wildlife",9.4620,77.2360],
+        ["Padmanabhaswamy Temple","Religious",8.4820,76.9430]
+    ]
+},
+
+"Madhya Pradesh":{
+    type:"State",
+    capital:"Bhopal",
+    cities:["Bhopal","Indore","Gwalior","Jabalpur","Ujjain","Khajuraho","Sanchi","Orchha","Mandu"],
+    places:[
+        ["Khajuraho Temples","Historical",24.8318,79.9199],
+        ["Sanchi Stupa","Historical",23.4793,77.7397],
+        ["Gwalior Fort","Historical",26.2298,78.1697],
+        ["Kanha National Park","Wildlife",22.3345,80.6115],
+        ["Bandhavgarh National Park","Wildlife",23.7240,81.0270],
+        ["Mahakaleshwar Temple","Religious",23.1828,75.7682]
+    ]
+},
+
+"Maharashtra":{
+    type:"State",
+    capital:"Mumbai",
+    cities:["Mumbai","Pune","Nagpur","Nashik","Aurangabad","Kolhapur","Solapur","Lonavala","Mahabaleshwar","Shirdi"],
+    places:[
+        ["Gateway of India","Historical",18.9220,72.8347],
+        ["Ajanta Caves","Historical",20.5519,75.7033],
+        ["Ellora Caves","Historical",20.0268,75.1780],
+        ["Shirdi Sai Baba Temple","Religious",19.7668,74.4777],
+        ["Lonavala","Nature",18.7546,73.4062],
+        ["Mahabaleshwar","Nature",17.9307,73.6477]
+    ]
+},
+
+"Manipur":{
+    type:"State",
+    capital:"Imphal",
+    cities:["Imphal","Thoubal","Bishnupur","Churachandpur"],
+    places:[
+        ["Loktak Lake","Nature",24.5521,93.7747],
+        ["Kangla Fort","Historical",24.8074,93.9384],
+        ["Keibul Lamjao National Park","Wildlife",24.5070,93.7880],
+        ["Shree Govindajee Temple","Religious",24.8080,93.9390]
+    ]
+},
+
+"Meghalaya":{
+    type:"State",
+    capital:"Shillong",
+    cities:["Shillong","Cherrapunji","Tura","Jowai","Nongpoh"],
+    places:[
+        ["Shillong","Nature",25.5788,91.8933],
+        ["Cherrapunji","Nature",25.2840,91.7210],
+        ["Living Root Bridges","Nature",25.2300,91.7300],
+        ["Dawki","Nature",25.1840,92.0200],
+        ["Mawsynram","Nature",25.2986,91.5820],
+        ["Elephant Falls","Nature",25.5370,91.8670]
+    ]
+},
+
+"Mizoram":{
+    type:"State",
+    capital:"Aizawl",
+    cities:["Aizawl","Lunglei","Champhai","Serchhip","Kolasib"],
+    places:[
+        ["Aizawl","Nature",23.7271,92.7176],
+        ["Phawngpui National Park","Nature",22.6450,93.0400],
+        ["Vantawng Falls","Nature",23.3070,92.6070],
+        ["Reiek","Nature",23.6850,92.5980]
+    ]
+},
+
+"Nagaland":{
+    type:"State",
+    capital:"Kohima",
+    cities:["Kohima","Dimapur","Mokokchung","Mon","Wokha"],
+    places:[
+        ["Kohima War Cemetery","Historical",25.6670,94.1086],
+        ["Dzukou Valley","Nature",25.5470,94.0140],
+        ["Khonoma Village","Nature",25.6710,94.0400],
+        ["Japfu Peak","Nature",25.5200,94.0800]
+    ]
+},
+
+"Odisha":{
+    type:"State",
+    capital:"Bhubaneswar",
+    cities:["Bhubaneswar","Puri","Cuttack","Rourkela","Konark","Sambalpur","Balasore"],
+    places:[
+        ["Jagannath Temple","Religious",19.8048,85.8177],
+        ["Konark Sun Temple","Historical",19.8876,86.0945],
+        ["Chilika Lake","Nature",19.7147,85.3270],
+        ["Lingaraj Temple","Religious",20.2380,85.8330],
+        ["Udayagiri Caves","Historical",20.2580,85.7780]
+    ]
+},
+
+"Punjab":{
+    type:"State",
+    capital:"Chandigarh",
+    cities:["Amritsar","Ludhiana","Jalandhar","Patiala","Bathinda","Pathankot"],
+    places:[
+        ["Golden Temple","Religious",31.6200,74.8765],
+        ["Jallianwala Bagh","Historical",31.6200,74.8800],
+        ["Wagah Border","Historical",31.6048,74.5730],
+        ["Anandpur Sahib","Religious",31.2350,76.5020],
+        ["Patiala Qila Mubarak","Historical",30.3380,76.3910]
+    ]
+},
+
+"Rajasthan":{
+    type:"State",
+    capital:"Jaipur",
+    cities:["Jaipur","Udaipur","Jodhpur","Jaisalmer","Ajmer","Pushkar","Bikaner","Kota","Mount Abu","Bharatpur"],
+    places:[
+        ["Amber Fort","Historical",26.9855,75.8513],
+        ["Hawa Mahal","Historical",26.9239,75.8267],
+        ["City Palace Udaipur","Historical",24.5764,73.6835],
+        ["Mehrangarh Fort","Historical",26.2980,73.0180],
+        ["Jaisalmer Fort","Historical",26.9124,70.9120],
+        ["Pushkar Lake","Religious",26.4897,74.5511],
+        ["Ranthambore National Park","Wildlife",26.0173,76.5026]
+    ]
+},
+
+"Sikkim":{
+    type:"State",
+    capital:"Gangtok",
+    cities:["Gangtok","Pelling","Namchi","Lachung","Gyalshing"],
+    places:[
+        ["Gangtok","Nature",27.3389,88.6065],
+        ["Tsomgo Lake","Nature",27.3720,88.7610],
+        ["Nathula Pass","Nature",27.3860,88.8300],
+        ["Rumtek Monastery","Religious",27.2870,88.5620],
+        ["Pelling","Nature",27.3160,88.2400]
+    ]
+},
+
+"Tamil Nadu":{
+    type:"State",
+    capital:"Chennai",
+    cities:["Chennai","Madurai","Coimbatore","Ooty","Kodaikanal","Thanjavur","Rameswaram","Kanyakumari","Salem"],
+    places:[
+        ["Meenakshi Amman Temple","Religious",9.9195,78.1193],
+        ["Marina Beach","Beach",13.0500,80.2824],
+        ["Brihadeeswarar Temple","Historical",10.7828,79.1318],
+        ["Ooty","Nature",11.4102,76.6950],
+        ["Kanyakumari","Nature",8.0883,77.5385],
+        ["Rameswaram Temple","Religious",9.2881,79.3174]
+    ]
+},
+
+"Telangana":{
+    type:"State",
+    capital:"Hyderabad",
+    cities:["Hyderabad","Warangal","Nizamabad","Karimnagar","Khammam","Nalgonda"],
+    places:[
+        ["Charminar","Historical",17.3616,78.4747],
+        ["Golconda Fort","Historical",17.3833,78.4011],
+        ["Hussain Sagar Lake","Nature",17.4239,78.4738],
+        ["Ramappa Temple","Historical",18.2590,79.9430],
+        ["Warangal Fort","Historical",17.9689,79.5941]
+    ]
+},
+
+"Tripura":{
+    type:"State",
+    capital:"Agartala",
+    cities:["Agartala","Udaipur","Dharmanagar","Kailasahar"],
+    places:[
+        ["Ujjayanta Palace","Historical",23.8315,91.2868],
+        ["Neermahal Palace","Historical",23.5070,91.2530],
+        ["Unakoti","Historical",24.3100,92.0120],
+        ["Sepahijala Wildlife Sanctuary","Wildlife",23.6550,91.2730]
+    ]
+},
+
+"Uttar Pradesh":{
+    type:"State",
+    capital:"Lucknow",
+    cities:["Lucknow","Agra","Varanasi","Prayagraj","Kanpur","Mathura","Ayodhya","Meerut","Jhansi","Noida"],
+    places:[
+        ["Taj Mahal","Historical",27.1751,78.0421],
+        ["Agra Fort","Historical",27.1795,78.0211],
+        ["Varanasi Ghats","Religious",25.3060,83.0100],
+        ["Ayodhya Ram Mandir","Religious",26.7990,82.2040],
+        ["Sarnath","Historical",25.3810,83.0220],
+        ["Fatehpur Sikri","Historical",27.0945,77.6679]
+    ]
+},
+
+"Uttarakhand":{
+    type:"State",
+    capital:"Dehradun",
+    cities:["Dehradun","Rishikesh","Haridwar","Nainital","Mussoorie","Almora","Kedarnath","Badrinath","Auli"],
+    places:[
+        ["Kedarnath Temple","Religious",30.7352,79.0669],
+        ["Badrinath Temple","Religious",30.7433,79.4938],
+        ["Rishikesh","Nature",30.0869,78.2676],
+        ["Haridwar","Religious",29.9457,78.1642],
+        ["Nainital","Nature",29.3919,79.4542],
+        ["Valley of Flowers","Nature",30.7280,79.6050],
+        ["Jim Corbett National Park","Wildlife",29.5300,78.7747]
+    ]
+},
+
+"West Bengal":{
+    type:"State",
+    capital:"Kolkata",
+    cities:["Kolkata","Darjeeling","Siliguri","Durgapur","Asansol","Howrah","Kalimpong"],
+    places:[
+        ["Victoria Memorial","Historical",22.5448,88.3426],
+        ["Howrah Bridge","Historical",22.5958,88.2636],
+        ["Darjeeling","Nature",27.0410,88.2663],
+        ["Sundarbans National Park","Wildlife",21.9497,88.9060],
+        ["Indian Museum","Museum",22.5579,88.3500]
+    ]
+},
+
+/* =========================
+   UNION TERRITORIES
+   ========================= */
+
+"Delhi":{
+    type:"Union Territory",
+    capital:"New Delhi",
+    cities:["New Delhi","Delhi","Dwarka","Rohini","Saket","Vasant Kunj"],
+    places:[
+        ["India Gate","Historical",28.6129,77.2295],
+        ["Red Fort","Historical",28.6562,77.2410],
+        ["Qutub Minar","Historical",28.5245,77.1855],
+        ["Lotus Temple","Religious",28.5535,77.2588],
+        ["Humayun's Tomb","Historical",28.5933,77.2507],
+        ["Akshardham Temple","Religious",28.6127,77.2773]
+    ]
+},
+
+"Jammu and Kashmir":{
+    type:"Union Territory",
+    capital:"Srinagar / Jammu",
+    cities:["Srinagar","Jammu","Gulmarg","Pahalgam","Sonamarg","Katra","Anantnag"],
+    places:[
+        ["Dal Lake","Nature",34.0368,74.8790],
+        ["Gulmarg","Nature",34.0484,74.3805],
+        ["Pahalgam","Nature",34.0161,75.3150],
+        ["Sonamarg","Nature",34.3032,75.2931],
+        ["Vaishno Devi","Religious",33.0308,74.9490]
+    ]
+},
+
+"Ladakh":{
+    type:"Union Territory",
+    capital:"Leh",
+    cities:["Leh","Kargil","Nubra","Diskit","Pangong"],
+    places:[
+        ["Pangong Lake","Nature",33.7595,78.6670],
+        ["Leh Palace","Historical",34.1656,77.5840],
+        ["Nubra Valley","Nature",34.6860,77.5680],
+        ["Khardung La","Nature",34.2820,77.6040],
+        ["Thiksey Monastery","Religious",34.0520,77.6660]
+    ]
+},
+
+"Chandigarh":{
+    type:"Union Territory",
+    capital:"Chandigarh",
+    cities:["Chandigarh"],
+    places:[
+        ["Rock Garden","Nature",30.7525,76.8173],
+        ["Sukhna Lake","Nature",30.7420,76.8188],
+        ["Rose Garden","Nature",30.7470,76.7820],
+        ["Capitol Complex","Historical",30.7580,76.8050]
+    ]
+},
+
+"Puducherry":{
+    type:"Union Territory",
+    capital:"Puducherry",
+    cities:["Puducherry","Auroville","Karaikal","Mahe","Yanam"],
+    places:[
+        ["Promenade Beach","Beach",11.9338,79.8298],
+        ["Sri Aurobindo Ashram","Religious",11.9340,79.8290],
+        ["Auroville","Nature",12.0060,79.8100],
+        ["Paradise Beach","Beach",11.8940,79.8120],
+        ["French Quarter","Historical",11.9300,79.8300]
+    ]
+},
+
+"Andaman and Nicobar Islands":{
+    type:"Union Territory",
+    capital:"Port Blair",
+    cities:["Port Blair","Havelock Island","Neil Island","Diglipur"],
+    places:[
+        ["Radhanagar Beach","Beach",11.9833,92.9833],
+        ["Cellular Jail","Historical",11.6670,92.7350],
+        ["Elephant Beach","Beach",12.0070,92.9630],
+        ["Ross Island","Historical",11.6750,92.7620],
+        ["Baratang Island","Nature",12.1000,92.7800]
+    ]
+},
+
+"Lakshadweep":{
+    type:"Union Territory",
+    capital:"Kavaratti",
+    cities:["Kavaratti","Agatti","Bangaram","Minicoy"],
+    places:[
+        ["Kavaratti Island","Beach",10.5669,72.6420],
+        ["Agatti Island","Beach",10.8560,72.1940],
+        ["Bangaram Island","Beach",10.9440,72.2870],
+        ["Minicoy Island","Beach",8.2980,73.0480]
+    ]
+},
+
+"Dadra and Nagar Haveli and Daman and Diu":{
+    type:"Union Territory",
+    capital:"Daman",
+    cities:["Daman","Diu","Silvassa"],
+    places:[
+        ["Diu Fort","Historical",20.7144,70.9820],
+        ["Nagoa Beach","Beach",20.7040,70.9220],
+        ["Devka Beach","Beach",20.4250,72.8420],
+        ["Silvassa","Nature",20.2730,73.0080]
+    ]
+}
+
+};
+
+
+/* =========================================================
+   POPULAR CITY DATABASE
+   These make common city searches instant.
+   Any other Indian city can also be searched using
+   the automatic Nominatim + Wikipedia system.
+   ========================================================= */
+
+const popularCities = {
+
+"Ahmedabad":{state:"Gujarat",lat:23.0225,lng:72.5714},
+"Surat":{state:"Gujarat",lat:21.1702,lng:72.8311},
+"Vadodara":{state:"Gujarat",lat:22.3072,lng:73.1812},
+"Rajkot":{state:"Gujarat",lat:22.3039,lng:70.8022},
+"Bhavnagar":{state:"Gujarat",lat:21.7645,lng:72.1519},
+"Jamnagar":{state:"Gujarat",lat:22.4707,lng:70.0577},
+"Junagadh":{state:"Gujarat",lat:21.5222,lng:70.4579},
+"Dwarka":{state:"Gujarat",lat:22.2442,lng:68.9685},
+"Somnath":{state:"Gujarat",lat:20.8880,lng:70.4010},
+"Gandhinagar":{state:"Gujarat",lat:23.2156,lng:72.6369},
+"Bhuj":{state:"Gujarat",lat:23.2420,lng:69.6669},
+
+"Mumbai":{state:"Maharashtra",lat:19.0760,lng:72.8777},
+"Pune":{state:"Maharashtra",lat:18.5204,lng:73.8567},
+"Nagpur":{state:"Maharashtra",lat:21.1458,lng:79.0882},
+"Nashik":{state:"Maharashtra",lat:19.9975,lng:73.7898},
+"Aurangabad":{state:"Maharashtra",lat:19.8762,lng:75.3433},
+"Kolhapur":{state:"Maharashtra",lat:16.7050,lng:74.2433},
+"Lonavala":{state:"Maharashtra",lat:18.7546,lng:73.4062},
+"Mahabaleshwar":{state:"Maharashtra",lat:17.9307,lng:73.6477},
+"Shirdi":{state:"Maharashtra",lat:19.7668,lng:74.4777},
+
+"Jaipur":{state:"Rajasthan",lat:26.9124,lng:75.7873},
+"Jodhpur":{state:"Rajasthan",lat:26.2389,lng:73.0243},
+"Udaipur":{state:"Rajasthan",lat:24.5854,lng:73.7125},
+"Jaisalmer":{state:"Rajasthan",lat:26.9157,lng:70.9083},
+"Ajmer":{state:"Rajasthan",lat:26.4499,lng:74.6399},
+"Pushkar":{state:"Rajasthan",lat:26.4897,lng:74.5511},
+"Bikaner":{state:"Rajasthan",lat:28.0229,lng:73.3119},
+"Kota":{state:"Rajasthan",lat:25.2138,lng:75.8648},
+"Mount Abu":{state:"Rajasthan",lat:24.5926,lng:72.7156},
+
+"Delhi":{state:"Delhi",lat:28.6139,lng:77.2090},
+"New Delhi":{state:"Delhi",lat:28.6139,lng:77.2090},
+
+"Agra":{state:"Uttar Pradesh",lat:27.1767,lng:78.0081},
+"Varanasi":{state:"Uttar Pradesh",lat:25.3176,lng:82.9739},
+"Lucknow":{state:"Uttar Pradesh",lat:26.8467,lng:80.9462},
+"Prayagraj":{state:"Uttar Pradesh",lat:25.4358,lng:81.8463},
+"Kanpur":{state:"Uttar Pradesh",lat:26.4499,lng:80.3319},
+"Mathura":{state:"Uttar Pradesh",lat:27.4924,lng:77.6737},
+"Ayodhya":{state:"Uttar Pradesh",lat:26.7990,lng:82.2040},
+"Jhansi":{state:"Uttar Pradesh",lat:25.4484,lng:78.5685},
+"Noida":{state:"Uttar Pradesh",lat:28.5355,lng:77.3910},
+
+"Bengaluru":{state:"Karnataka",lat:12.9716,lng:77.5946},
+"Bangalore":{state:"Karnataka",lat:12.9716,lng:77.5946},
+"Mysuru":{state:"Karnataka",lat:12.2958,lng:76.6394},
+"Mysore":{state:"Karnataka",lat:12.2958,lng:76.6394},
+"Mangaluru":{state:"Karnataka",lat:12.9141,lng:74.8560},
+"Hampi":{state:"Karnataka",lat:15.3350,lng:76.4600},
+"Coorg":{state:"Karnataka",lat:12.3375,lng:75.8069},
+"Udupi":{state:"Karnataka",lat:13.3409,lng:74.7421},
+
+"Chennai":{state:"Tamil Nadu",lat:13.0827,lng:80.2707},
+"Madurai":{state:"Tamil Nadu",lat:9.9252,lng:78.1198},
+"Coimbatore":{state:"Tamil Nadu",lat:11.0168,lng:76.9558},
+"Ooty":{state:"Tamil Nadu",lat:11.4102,lng:76.6950},
+"Kodaikanal":{state:"Tamil Nadu",lat:10.2381,lng:77.4892},
+"Rameswaram":{state:"Tamil Nadu",lat:9.2881,lng:79.3174},
+"Kanyakumari":{state:"Tamil Nadu",lat:8.0883,lng:77.5385},
+"Thanjavur":{state:"Tamil Nadu",lat:10.7870,lng:79.1378},
+
+"Kochi":{state:"Kerala",lat:9.9312,lng:76.2673},
+"Thiruvananthapuram":{state:"Kerala",lat:8.5241,lng:76.9366},
+"Kozhikode":{state:"Kerala",lat:11.2588,lng:75.7804},
+"Alappuzha":{state:"Kerala",lat:9.4981,lng:76.3388},
+"Alleppey":{state:"Kerala",lat:9.4981,lng:76.3388},
+"Munnar":{state:"Kerala",lat:10.0889,lng:77.0595},
+"Varkala":{state:"Kerala",lat:8.7379,lng:76.7163},
+"Kumarakom":{state:"Kerala",lat:9.6170,lng:76.4300},
+
+"Hyderabad":{state:"Telangana",lat:17.3850,lng:78.4867},
+"Warangal":{state:"Telangana",lat:17.9689,lng:79.5941},
+"Nizamabad":{state:"Telangana",lat:18.6725,lng:78.0941},
+"Karimnagar":{state:"Telangana",lat:18.4386,lng:79.1288},
+
+"Visakhapatnam":{state:"Andhra Pradesh",lat:17.6868,lng:83.2185},
+"Vijayawada":{state:"Andhra Pradesh",lat:16.5062,lng:80.6480},
+"Tirupati":{state:"Andhra Pradesh",lat:13.6288,lng:79.4192},
+"Guntur":{state:"Andhra Pradesh",lat:16.3067,lng:80.4365},
+"Nellore":{state:"Andhra Pradesh",lat:14.4426,lng:79.9865},
+
+"Bhopal":{state:"Madhya Pradesh",lat:23.2599,lng:77.4126},
+"Indore":{state:"Madhya Pradesh",lat:22.7196,lng:75.8577},
+"Gwalior":{state:"Madhya Pradesh",lat:26.2183,lng:78.1828},
+"Jabalpur":{state:"Madhya Pradesh",lat:23.1815,lng:79.9864},
+"Ujjain":{state:"Madhya Pradesh",lat:23.1765,lng:75.7885},
+"Khajuraho":{state:"Madhya Pradesh",lat:24.8318,lng:79.9199},
+"Sanchi":{state:"Madhya Pradesh",lat:23.4793,lng:77.7397},
+
+"Kolkata":{state:"West Bengal",lat:22.5726,lng:88.3639},
+"Darjeeling":{state:"West Bengal",lat:27.0410,lng:88.2663},
+"Siliguri":{state:"West Bengal",lat:26.7271,lng:88.3953},
+"Howrah":{state:"West Bengal",lat:22.5958,lng:88.2636},
+
+"Patna":{state:"Bihar",lat:25.5941,lng:85.1376},
+"Gaya":{state:"Bihar",lat:24.7914,lng:85.0002},
+"Bodh Gaya":{state:"Bihar",lat:24.6961,lng:84.9914},
+"Rajgir":{state:"Bihar",lat:25.0280,lng:85.4200},
+"Nalanda":{state:"Bihar",lat:25.1367,lng:85.4431},
+
+"Ranchi":{state:"Jharkhand",lat:23.3441,lng:85.3096},
+"Jamshedpur":{state:"Jharkhand",lat:22.8046,lng:86.2029},
+"Dhanbad":{state:"Jharkhand",lat:23.7957,lng:86.4304},
+"Deoghar":{state:"Jharkhand",lat:24.4921,lng:86.6953},
+
+"Raipur":{state:"Chhattisgarh",lat:21.2514,lng:81.6296},
+"Bilaspur":{state:"Chhattisgarh",lat:22.0797,lng:82.1409},
+"Jagdalpur":{state:"Chhattisgarh",lat:19.0748,lng:82.0080},
+
+"Shimla":{state:"Himachal Pradesh",lat:31.1048,lng:77.1734},
+"Manali":{state:"Himachal Pradesh",lat:32.2432,lng:77.1892},
+"Dharamshala":{state:"Himachal Pradesh",lat:32.2190,lng:76.3234},
+"Kullu":{state:"Himachal Pradesh",lat:31.9579,lng:77.1095},
+"Dalhousie":{state:"Himachal Pradesh",lat:32.5387,lng:75.9700},
+
+"Dehradun":{state:"Uttarakhand",lat:30.3165,lng:78.0322},
+"Rishikesh":{state:"Uttarakhand",lat:30.0869,lng:78.2676},
+"Haridwar":{state:"Uttarakhand",lat:29.9457,lng:78.1642},
+"Nainital":{state:"Uttarakhand",lat:29.3919,lng:79.4542},
+"Mussoorie":{state:"Uttarakhand",lat:30.4598,lng:78.0644},
+"Kedarnath":{state:"Uttarakhand",lat:30.7352,lng:79.0669},
+"Badrinath":{state:"Uttarakhand",lat:30.7433,lng:79.4938},
+
+"Amritsar":{state:"Punjab",lat:31.6340,lng:74.8723},
+"Ludhiana":{state:"Punjab",lat:30.9010,lng:75.8573},
+"Jalandhar":{state:"Punjab",lat:31.3260,lng:75.5762},
+"Patiala":{state:"Punjab",lat:30.3398,lng:76.3869},
+
+"Guwahati":{state:"Assam",lat:26.1445,lng:91.7362},
+"Dibrugarh":{state:"Assam",lat:27.4728,lng:94.9120},
+"Jorhat":{state:"Assam",lat:26.7509,lng:94.2037},
+"Silchar":{state:"Assam",lat:24.8333,lng:92.7789},
+
+"Shillong":{state:"Meghalaya",lat:25.5788,lng:91.8933},
+"Cherrapunji":{state:"Meghalaya",lat:25.2840,lng:91.7210},
+"Dawki":{state:"Meghalaya",lat:25.1840,lng:92.0200},
+"Tura":{state:"Meghalaya",lat:25.5140,lng:90.2030},
+
+"Imphal":{state:"Manipur",lat:24.8170,lng:93.9368},
+"Loktak":{state:"Manipur",lat:24.5521,lng:93.7747},
+
+"Aizawl":{state:"Mizoram",lat:23.7271,lng:92.7176},
+"Champhai":{state:"Mizoram",lat:23.4740,lng:93.3260},
+"Lunglei":{state:"Mizoram",lat:22.8870,lng:92.7350},
+
+"Kohima":{state:"Nagaland",lat:25.6751,lng:94.1086},
+"Dimapur":{state:"Nagaland",lat:25.9117,lng:93.7217},
+
+"Gangtok":{state:"Sikkim",lat:27.3389,lng:88.6065},
+"Pelling":{state:"Sikkim",lat:27.3160,lng:88.2400},
+"Lachung":{state:"Sikkim",lat:27.6880,lng:88.7410},
+
+"Agartala":{state:"Tripura",lat:23.8315,lng:91.2868},
+"Udaipur Tripura":{state:"Tripura",lat:23.5330,lng:91.4830},
+
+"Itanagar":{state:"Arunachal Pradesh",lat:27.0844,lng:93.6053},
+"Tawang":{state:"Arunachal Pradesh",lat:27.5861,lng:91.8594},
+"Ziro":{state:"Arunachal Pradesh",lat:27.5430,lng:93.8310},
+
+"Panaji":{state:"Goa",lat:15.4909,lng:73.8278},
+"Calangute":{state:"Goa",lat:15.5440,lng:73.7550},
+"Anjuna":{state:"Goa",lat:15.5736,lng:73.7400},
+"Margao":{state:"Goa",lat:15.2832,lng:73.9862},
+
+"Port Blair":{state:"Andaman and Nicobar Islands",lat:11.6234,lng:92.7265},
+"Havelock Island":{state:"Andaman and Nicobar Islands",lat:12.0069,lng:92.9870},
+
+"Leh":{state:"Ladakh",lat:34.1526,lng:77.5771},
+"Kargil":{state:"Ladakh",lat:34.5539,lng:76.1349},
+"Pangong":{state:"Ladakh",lat:33.7595,lng:78.6670},
+
+"Srinagar":{state:"Jammu and Kashmir",lat:34.0837,lng:74.7973},
+"Jammu":{state:"Jammu and Kashmir",lat:32.7266,lng:74.8570},
+"Gulmarg":{state:"Jammu and Kashmir",lat:34.0484,lng:74.3805},
+"Pahalgam":{state:"Jammu and Kashmir",lat:34.0161,lng:75.3150},
+
+"Chandigarh":{state:"Chandigarh",lat:30.7333,lng:76.7794},
+"Puducherry":{state:"Puducherry",lat:11.9416,lng:79.8083},
+"Auroville":{state:"Puducherry",lat:12.0060,lng:79.8100},
+"Daman":{state:"Dadra and Nagar Haveli and Daman and Diu",lat:20.3974,lng:72.8328},
+"Diu":{state:"Dadra and Nagar Haveli and Daman and Diu",lat:20.7144,lng:70.9820},
+"Silvassa":{state:"Dadra and Nagar Haveli and Daman and Diu",lat:20.2730,lng:73.0080},
+"Kavaratti":{state:"Lakshadweep",lat:10.5669,lng:72.6420}
+
+};
+
+
+/* =========================================================
+   MAP
+   ========================================================= */
+
+let map = L.map("map").setView([22.9734,78.6569],5);
+
+L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+        maxZoom:19,
+        attribution:"© OpenStreetMap contributors"
+    }
+).addTo(map);
+
+let markers = [];
+let currentPlaces = [];
+let currentMode = "state";
+let currentLocation = null;
+let currentCategory = "All";
+
+
+/* =========================================================
+   QUICK BUTTONS
+   ========================================================= */
+
+const quickPlaces = [
+    "Gujarat",
+    "Rajasthan",
+    "Maharashtra",
+    "Kerala",
+    "Goa",
+    "Delhi",
+    "Karnataka",
+    "Tamil Nadu",
+    "Uttar Pradesh",
+    "Himachal Pradesh",
+    "Ahmedabad",
+    "Mumbai",
+    "Jaipur",
+    "Delhi",
+    "Agra",
+    "Varanasi",
+    "Bengaluru",
+    "Kolkata"
+];
+
+document.getElementById("quickButtons").innerHTML =
+    quickPlaces.map(x =>
+        `<button onclick="quickSearch('${x.replace(/'/g,"\\'")}')">${x}</button>`
+    ).join("");
+
+
+function quickSearch(name){
+    document.getElementById("searchInput").value=name;
+    searchLocation();
+}
+
+
+/* =========================================================
+   SEARCH SUGGESTIONS
+   ========================================================= */
+
+const searchInput = document.getElementById("searchInput");
+const suggestions = document.getElementById("suggestions");
+
+searchInput.addEventListener("input",function(){
+
+    const value = this.value.trim().toLowerCase();
+
+    if(!value){
+        suggestions.style.display="none";
+        return;
+    }
+
+    let results=[];
+
+    Object.keys(regions).forEach(region=>{
+
+        if(region.toLowerCase().includes(value)){
+
+            results.push({
+                name:region,
+                type:regions[region].type,
+                subtitle:
+                    regions[region].type +
+                    " • Capital: " +
+                    regions[region].capital
+            });
+        }
+    });
+
+    Object.keys(popularCities).forEach(city=>{
+
+        if(city.toLowerCase().includes(value)){
+
+            const state=popularCities[city].state;
+
+            results.push({
+                name:city,
+                type:"City",
+                subtitle:"City • "+state
+            });
+        }
+    });
+
+    results=results.slice(0,15);
+
+    if(results.length===0){
+        suggestions.style.display="none";
+        return;
+    }
+
+    suggestions.innerHTML=results.map(item=>`
+        <div class="suggestion"
+             onclick="selectSuggestion('${item.name.replace(/'/g,"\\'")}')">
+            <strong>${item.name}</strong>
+            <small>${item.subtitle}</small>
+        </div>
+    `).join("");
+
+    suggestions.style.display="block";
+});
+
+
+function selectSuggestion(name){
+
+    searchInput.value=name;
+    suggestions.style.display="none";
+    searchLocation();
+}
+
+
+document.addEventListener("click",function(e){
+
+    if(!e.target.closest(".search-box") &&
+       !e.target.closest(".suggestions")){
+
+        suggestions.style.display="none";
+    }
+});
+
+
+/* =========================================================
+   MAIN SEARCH
+   ========================================================= */
+
+async function searchLocation(){
+
+    const query=searchInput.value.trim();
+
+    if(!query){
+        return;
+    }
+
+    suggestions.style.display="none";
+
+    /* State / UT exact search */
+    const regionName=findRegion(query);
+
+    if(regionName){
+
+        loadState(regionName);
+        return;
+    }
+
+    /* Popular city exact search */
+    const cityName=findCity(query);
+
+    if(cityName){
+
+        const city=popularCities[cityName];
+
+        await loadCity(
+            cityName,
+            city.state,
+            city.lat,
+            city.lng
+        );
+
+        return;
+    }
+
+    /* Any other Indian city */
+    await searchUnknownIndianCity(query);
+}
+
+
+/* =========================================================
+   FIND STATE
+   ========================================================= */
+
+function findRegion(query){
+
+    const normalized=query.trim().toLowerCase();
+
+    for(const name of Object.keys(regions)){
+
+        if(name.toLowerCase()===normalized){
+            return name;
+        }
+    }
+
+    /* Common aliases */
+
+    const aliases={
+        "up":"Uttar Pradesh",
+        "uttaranchal":"Uttarakhand",
+        "mp":"Madhya Pradesh",
+        "mh":"Maharashtra",
+        "tn":"Tamil Nadu",
+        "ap":"Andhra Pradesh",
+        "ts":"Telangana",
+        "wb":"West Bengal",
+        "hp":"Himachal Pradesh",
+        "jk":"Jammu and Kashmir",
+        "j&k":"Jammu and Kashmir",
+        "odisha":"Odisha",
+        "orissa":"Odisha",
+        "nct delhi":"Delhi",
+        "jammu & kashmir":"Jammu and Kashmir",
+        "ladakh":"Ladakh",
+        "pondicherry":"Puducherry",
+        "andaman":"Andaman and Nicobar Islands",
+        "andaman and nicobar":"Andaman and Nicobar Islands"
+    };
+
+    return aliases[normalized] || null;
+}
+
+
+/* =========================================================
+   FIND CITY
+   ========================================================= */
+
+function findCity(query){
+
+    const normalized=query.trim().toLowerCase();
+
+    for(const city of Object.keys(popularCities)){
+
+        if(city.toLowerCase()===normalized){
+            return city;
+        }
+    }
+
+    return null;
+}
+
+
+/* =========================================================
+   LOAD STATE
+   ========================================================= */
+
+async function loadState(regionName){
+
+    currentMode="state";
+    currentLocation=regionName;
+
+    const region=regions[regionName];
+
+    currentPlaces=region.places.map(p=>({
+
+        name:p[0],
+        category:p[1],
+        lat:p[2],
+        lng:p[3],
+        description:
+            "Famous tourist attraction in " +
+            regionName +
+            ", India."
+
+    }));
+
+    currentCategory="All";
+
+    updateFilters();
+
+    document.getElementById("mainInfo").innerHTML=`
+
+        <div class="info">
+
+            <h2>🇮🇳 ${regionName}</h2>
+
+            <p>
+                Explore famous tourist places, historical sites,
+                religious destinations, beaches, nature spots and
+                wildlife attractions in ${regionName}.
+            </p>
+
+            <div class="stats">
+
+                <div class="stat">
+                    <strong>${region.capital}</strong>
+                    <span>Capital</span>
+                </div>
+
+                <div class="stat">
+                    <strong>${region.cities.length}+</strong>
+                    <span>Major Cities</span>
+                </div>
+
+                <div class="stat">
+                    <strong>${region.places.length}</strong>
+                    <span>Featured Places</span>
+                </div>
+
+                <div class="stat">
+                    <strong>${region.type}</strong>
+                    <span>Region Type</span>
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("placesTitle").innerText=
+        `Famous Places in ${regionName}`;
+
+    renderMap(currentPlaces,region.places[0][2],region.places[0][3],6);
+
+    await loadImagesForPlaces(currentPlaces);
+
+    renderPlaces();
+}
+
+
+/* =========================================================
+   LOAD CITY
+   ========================================================= */
+
+async function loadCity(city,state,lat,lng){
+
+    currentMode="city";
+    currentLocation=city;
+
+    document.getElementById("mainInfo").innerHTML=`
+
+        <div class="info">
+
+            <h2>📍 ${city}</h2>
+
+            <p>
+                Famous places and tourist attractions in
+                <strong>${city}</strong>, ${state}, India.
+                The website automatically searches Wikipedia
+                for nearby attractions.
+            </p>
+
+            <div class="stats">
+
+                <div class="stat">
+                    <strong>${city}</strong>
+                    <span>City</span>
+                </div>
+
+                <div class="stat">
+                    <strong>${state}</strong>
+                    <span>State / UT</span>
+                </div>
+
+                <div class="stat">
+                    <strong>India</strong>
+                    <span>Country</span>
+                </div>
+
+                <div class="stat">
+                    <strong>Live</strong>
+                    <span>Place Search</span>
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("placesTitle").innerText=
+        `Famous Places in ${city}`;
+
+    document.getElementById("places").innerHTML=
+        `<div class="loading">🔎 Finding famous places around ${city}...</div>`;
+
+    map.setView([lat,lng],11);
+
+    clearMarkers();
+
+    L.marker([lat,lng])
+        .addTo(map)
+        .bindPopup(`<b>${city}</b><br>${state}, India`)
+        .openPopup();
+
+    try{
+
+        const url=
+            "https://en.wikipedia.org/w/api.php?"+
+            new URLSearchParams({
+
+                action:"query",
+                generator:"geosearch",
+                ggscoord:`${lat}|${lng}`,
+                ggsradius:"10000",
+                ggslimit:"20",
+
+                prop:"coordinates|pageimages|info",
+                inprop:"url",
+
+                piprop:"thumbnail",
+                pithumbsize:"700",
+
+                format:"json",
+                origin:"*"
+
+            });
+
+        const response=await fetch(url);
+
+        const data=await response.json();
+
+        const pages=data.query?.pages || {};
+
+        let places=Object.values(pages);
+
+        places=places.filter(page=>{
+
+            const title=page.title.toLowerCase();
+
+            return !title.includes("list of") &&
+                   title!==city.toLowerCase();
+
+        });
+
+        places=places.slice(0,12);
+
+        currentPlaces=places.map(page=>{
+
+            const coordinate=
+                page.coordinates &&
+                page.coordinates[0];
+
+            return {
+
+                name:page.title,
+
+                category:inferCategory(page.title),
+
+                lat:coordinate
+                    ? coordinate.lat
+                    : lat,
+
+                lng:coordinate
+                    ? coordinate.lon
+                    : lng,
+
+                description:
+                    `Famous place or attraction near ${city}.`,
+
+                image:
+                    page.thumbnail
+                    ? page.thumbnail.source
+                    : placeholderImage(page.title),
+
+                wiki:
+                    page.fullurl ||
+                    `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title)}`
+            };
+
+        });
+
+        if(currentPlaces.length===0){
+
+            currentPlaces=[{
+                name:city,
+                category:"City",
+                lat:lat,
+                lng:lng,
+                description:`Explore ${city}, ${state}, India.`,
+                image:placeholderImage(city),
+                wiki:`https://en.wikipedia.org/wiki/${encodeURIComponent(city)}`
+            }];
+        }
+
+        currentCategory="All";
+
+        updateFilters();
+
+        renderMap(
+            currentPlaces,
+            lat,
+            lng,
+            11
+        );
+
+        renderPlaces();
+
+    }catch(error){
+
+        console.error(error);
+
+        document.getElementById("places").innerHTML=`
+
+            <div class="error">
+                Unable to load city attractions right now.
+                Please check your internet connection and try again.
+            </div>
+
+        `;
+    }
+}
+
+
+/* =========================================================
+   UNKNOWN CITY SEARCH
+   This makes the search work for many cities not manually
+   added to popularCities.
+   ========================================================= */
+
+async function searchUnknownIndianCity(cityName){
+
+    document.getElementById("mainInfo").innerHTML=`
+        <div class="info">
+            <div class="loading">
+                🌍 Searching India for "${cityName}"...
+            </div>
+        </div>
+    `;
+
+    document.getElementById("places").innerHTML="";
+
+    try{
+
+        const url=
+            "https://nominatim.openstreetmap.org/search?"+
+            new URLSearchParams({
+
+                q:`${cityName}, India`,
+                format:"jsonv2",
+                addressdetails:"1",
+                limit:"5",
+                countrycodes:"in"
+
+            });
+
+        const response=await fetch(url,{
+            headers:{
+                "Accept-Language":"en"
+            }
+        });
+
+        const results=await response.json();
+
+        if(!results.length){
+
+            document.getElementById("mainInfo").innerHTML=`
+
+                <div class="error">
+                    ❌ City not found.
+                    Try a city such as Ahmedabad, Jaipur,
+                    Mumbai, Delhi, Surat, Pune, Agra or Varanasi.
+                </div>
+
+            `;
+
+            return;
+        }
+
+        let selected=results.find(item=>{
+
+            return [
+                "city",
+                "town",
+                "municipality",
+                "village"
+            ].includes(item.type);
+
+        }) || results[0];
+
+        const lat=parseFloat(selected.lat);
+        const lng=parseFloat(selected.lon);
+
+        const address=selected.address || {};
+
+        const state=
+            address.state ||
+            address.region ||
+            "India";
+
+        const properCity=
+            address.city ||
+            address.town ||
+            address.municipality ||
+            address.village ||
+            selected.display_name.split(",")[0];
+
+        await loadCity(
+            properCity,
+            state,
+            lat,
+            lng
+        );
+
+    }catch(error){
+
+        console.error(error);
+
+        document.getElementById("mainInfo").innerHTML=`
+
+            <div class="error">
+                ❌ Could not search this city.
+                Please check your internet connection.
+            </div>
+        `;
+    }
+}
+
+
+/* =========================================================
+   CATEGORY CLASSIFICATION
+   ========================================================= */
+
+function inferCategory(title){
+
+    const text=title.toLowerCase();
+
+    if(
+        text.includes("temple") ||
+        text.includes("mosque") ||
+        text.includes("church") ||
+        text.includes("gurdwara") ||
+        text.includes("monastery") ||
+        text.includes("shrine") ||
+        text.includes("ashram")
+    ){
+        return "Religious";
+    }
+
+    if(
+        text.includes("beach") ||
+        text.includes("coast") ||
+        text.includes("marina")
+    ){
+        return "Beach";
+    }
+
+    if(
+        text.includes("national park") ||
+        text.includes("wildlife") ||
+        text.includes("sanctuary") ||
+        text.includes("zoo")
+    ){
+        return "Wildlife";
+    }
+
+    if(
+        text.includes("museum")
+    ){
+        return "Museum";
+    }
+
+    if(
+        text.includes("lake") ||
+        text.includes("waterfall") ||
+        text.includes("falls") ||
+        text.includes("valley") ||
+        text.includes("hill") ||
+        text.includes("mount") ||
+        text.includes("garden") ||
+        text.includes("park") ||
+        text.includes("island")
+    ){
+        return "Nature";
+    }
+
+    return "Historical";
+}
+
+
+/* =========================================================
+   MAP
+   ========================================================= */
+
+function renderMap(places,centerLat,centerLng,zoom){
+
+    clearMarkers();
+
+    map.setView(
+        [centerLat,centerLng],
+        zoom
+    );
+
+    places.forEach(place=>{
+
+        if(
+            typeof place.lat!=="number" ||
+            typeof place.lng!=="number"
+        ){
+            return;
+        }
+
+        const marker=L.marker([
+            place.lat,
+            place.lng
+        ]).addTo(map);
+
+        marker.bindPopup(`
+
+            <div style="min-width:180px">
+
+                <strong>${place.name}</strong>
+
+                <br>
+
+                <span style="color:#ff5a00">
+                    ${place.category}
+                </span>
+
+                <br><br>
+
+                <button
+                    onclick="focusPlace(${place.lat},${place.lng})"
+                    style="
+                    padding:7px 12px;
+                    border:0;
+                    background:#ff6500;
+                    color:white;
+                    border-radius:6px;
+                    cursor:pointer;">
+                    View on Map
+                </button>
+
+            </div>
+
+        `);
+
+        markers.push(marker);
+    });
+}
+
+
+function clearMarkers(){
+
+    markers.forEach(marker=>{
+        map.removeLayer(marker);
+    });
+
+    markers=[];
+}
+
+
+function focusPlace(lat,lng){
+
+    map.setView(
+        [lat,lng],
+        15
+    );
+
+    window.scrollTo({
+        top:document.getElementById("map").offsetTop-80,
+        behavior:"smooth"
+    });
+}
+
+
+/* =========================================================
+   IMAGES FOR STATE PLACES
+   ========================================================= */
+
+async function loadImagesForPlaces(places){
+
+    await Promise.all(
+
+        places.map(async place=>{
+
+            if(place.image){
+                return;
+            }
+
+            try{
+
+                const url=
+                    "https://commons.wikimedia.org/w/api.php?"+
+                    new URLSearchParams({
+
+                        action:"query",
+                        generator:"search",
+
+                        gsrsearch:
+                            `${place.name} India`,
+
+                        gsrnamespace:"6",
+                        gsrlimit:"1",
+
+                        prop:"imageinfo",
+                        iiprop:"url",
+
+                        format:"json",
+                        origin:"*"
+
+                    });
+
+                const response=await fetch(url);
+
+                const data=await response.json();
+
+                const pages=
+                    data.query?.pages || {};
+
+                const first=
+                    Object.values(pages)[0];
+
+                if(
+                    first &&
+                    first.imageinfo &&
+                    first.imageinfo[0]
+                ){
+
+                    place.image=
+                        first.imageinfo[0].url;
+
+                }else{
+
+                    place.image=
+                        placeholderImage(place.name);
+                }
+
+            }catch(error){
+
+                place.image=
+                    placeholderImage(place.name);
+            }
+
+        })
+    );
+}
+
+
+/* =========================================================
+   PLACEHOLDER
+   ========================================================= */
+
+function placeholderImage(text){
+
+    return "https://placehold.co/800x500?text="+
+        encodeURIComponent(text);
+}
+
+
+/* =========================================================
+   FILTER
+   ========================================================= */
+
+function filterPlaces(category,button){
+
+    currentCategory=category;
+
+    document.querySelectorAll(".filter")
+        .forEach(btn=>{
+            btn.classList.remove("active");
+        });
+
+    if(button){
+        button.classList.add("active");
+    }
+
+    renderPlaces();
+}
+
+
+function updateFilters(){
+
+    document.querySelectorAll(".filter")
+        .forEach(btn=>{
+            btn.classList.remove("active");
+        });
+
+    const first=
+        document.querySelector(".filter");
+
+    if(first){
+        first.classList.add("active");
+    }
+}
+
+
+/* =========================================================
+   RENDER CARDS
+   ========================================================= */
+
+function renderPlaces(){
+
+    let filtered=currentPlaces;
+
+    if(currentCategory!=="All"){
+
+        filtered=currentPlaces.filter(place=>
+            place.category===currentCategory
+        );
+    }
+
+    const container=
+        document.getElementById("places");
+
+    if(!filtered.length){
+
+        container.innerHTML=`
+
+            <div class="loading">
+                No places found in this category.
+            </div>
+
+        `;
+
+        return;
+    }
+
+    container.innerHTML=filtered.map((place,index)=>{
+
+        const image=
+            place.image ||
+            placeholderImage(place.name);
+
+        const wiki=
+            place.wiki ||
+            `https://en.wikipedia.org/wiki/${
+                encodeURIComponent(place.name)
+            }`;
+
+        return `
+
+        <div class="card">
+
+            <img
+                src="${image}"
+                alt="${place.name}"
+                loading="lazy"
+                onerror="this.src='${placeholderImage(place.name)}'"
+            >
+
+            <div class="card-content">
+
+                <span class="badge">
+                    ${place.category}
+                </span>
+
+                <h3>${place.name}</h3>
+
+                <p>
+                    ${place.description}
+                </p>
+
+                <div class="card-buttons">
+
+                    <button
+                        class="view-map"
+                        onclick="
+                            focusPlace(
+                                ${place.lat},
+                                ${place.lng}
+                            )
+                        ">
+                        📍 Map
+                    </button>
+
+                    <a
+                        class="wikipedia"
+                        href="${wiki}"
+                        target="_blank"
+                        rel="noopener">
+                        📖 Details
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        `;
+
+    }).join("");
+
+}
+
+
+/* =========================================================
+   ENTER KEY SEARCH
+   ========================================================= */
+
+searchInput.addEventListener("keydown",function(event){
+
+    if(event.key==="Enter"){
+        searchLocation();
+    }
+
+});
+
+
+/* =========================================================
+   INITIAL PAGE
+   ========================================================= */
+
+loadState("Gujarat");
+
+</script>
+
+</body>
+</html>

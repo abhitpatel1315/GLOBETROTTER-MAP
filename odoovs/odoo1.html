@@ -1,0 +1,3069 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Explore India - 2D & 3D Tourism Map</title>
+
+
+    <!-- =========================
+         LEAFLET CSS
+    ========================== -->
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+
+    <!-- =========================
+         CESIUM CSS
+    ========================== -->
+
+    <link
+        href="https://cesium.com/downloads/cesiumjs/releases/1.136/Build/Cesium/Widgets/widgets.css"
+        rel="stylesheet"
+    >
+
+
+    <!-- =========================
+         STYLE
+    ========================== -->
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #f4f7fb;
+
+            color: #172033;
+
+        }
+
+
+        /* =========================
+           HEADER
+        ========================== */
+
+        header {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ff7a18,
+                    #ff3d00,
+                    #e91e63
+                );
+
+            color: white;
+
+            padding: 28px 20px;
+
+            text-align: center;
+
+        }
+
+
+        header h1 {
+
+            font-size: 38px;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        header p {
+
+            font-size: 17px;
+
+            opacity: .95;
+
+        }
+
+
+        /* =========================
+           SEARCH
+        ========================== */
+
+        .search-section {
+
+            background: white;
+
+            padding: 25px;
+
+            box-shadow:
+                0 3px 15px
+                rgba(0,0,0,.08);
+
+            position: relative;
+
+            z-index: 1000;
+
+        }
+
+
+        .search-container {
+
+            max-width: 900px;
+
+            margin: auto;
+
+            position: relative;
+
+        }
+
+
+        .search-box {
+
+            display: flex;
+
+            gap: 10px;
+
+        }
+
+
+        #stateSearch {
+
+            flex: 1;
+
+            padding:
+                16px 18px;
+
+            border:
+                2px solid #ddd;
+
+            border-radius: 12px;
+
+            font-size: 17px;
+
+            outline: none;
+
+        }
+
+
+        #stateSearch:focus {
+
+            border-color: #ff5722;
+
+        }
+
+
+        #searchButton {
+
+            border: none;
+
+            background: #ff5722;
+
+            color: white;
+
+            padding:
+                0 25px;
+
+            border-radius: 12px;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+            font-weight: bold;
+
+        }
+
+
+        #searchButton:hover {
+
+            background: #e64a19;
+
+        }
+
+
+        /* =========================
+           SUGGESTIONS
+        ========================== */
+
+        #suggestions {
+
+            position: absolute;
+
+            top: 60px;
+
+            left: 0;
+
+            right: 100px;
+
+            background: white;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 8px 25px
+                rgba(0,0,0,.15);
+
+            overflow: hidden;
+
+            display: none;
+
+            z-index: 5000;
+
+        }
+
+
+        .suggestion {
+
+            padding: 13px 16px;
+
+            cursor: pointer;
+
+            border-bottom:
+                1px solid #eee;
+
+        }
+
+
+        .suggestion:hover {
+
+            background: #fff3ed;
+
+        }
+
+
+        /* =========================
+           QUICK STATES
+        ========================== */
+
+        .quick-states {
+
+            max-width: 1100px;
+
+            margin:
+                18px auto 0;
+
+            display: flex;
+
+            gap: 8px;
+
+            flex-wrap: wrap;
+
+            justify-content: center;
+
+        }
+
+
+        .state-chip {
+
+            border: none;
+
+            background: #f1f3f6;
+
+            padding:
+                8px 13px;
+
+            border-radius: 20px;
+
+            cursor: pointer;
+
+        }
+
+
+        .state-chip:hover {
+
+            background: #ff5722;
+
+            color: white;
+
+        }
+
+
+        /* =========================
+           MAIN
+        ========================== */
+
+        .main {
+
+            max-width: 1400px;
+
+            margin: auto;
+
+            padding: 25px;
+
+        }
+
+
+        /* =========================
+           STATE INFO
+        ========================== */
+
+        .state-info {
+
+            background: white;
+
+            padding: 25px;
+
+            border-radius: 16px;
+
+            margin-bottom: 20px;
+
+            box-shadow:
+                0 5px 20px
+                rgba(0,0,0,.07);
+
+        }
+
+
+        .state-info h2 {
+
+            font-size: 30px;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .state-info p {
+
+            color: #666;
+
+            line-height: 1.6;
+
+        }
+
+
+        .stats {
+
+            display: flex;
+
+            gap: 15px;
+
+            margin-top: 18px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+        .stat {
+
+            background: #fff3ed;
+
+            padding:
+                12px 18px;
+
+            border-radius: 10px;
+
+        }
+
+
+        .stat strong {
+
+            display: block;
+
+            font-size: 20px;
+
+            color: #e64a19;
+
+        }
+
+
+        /* =========================
+           MAP TOGGLE
+        ========================== */
+
+        .map-toolbar {
+
+            display: flex;
+
+            justify-content: center;
+
+            gap: 10px;
+
+            margin-bottom: 12px;
+
+        }
+
+
+        .map-toggle {
+
+            padding:
+                12px 24px;
+
+            border:
+                1px solid #ddd;
+
+            border-radius: 10px;
+
+            background: white;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+            font-weight: bold;
+
+            transition: .2s;
+
+        }
+
+
+        .map-toggle:hover {
+
+            background: #ff7043;
+
+            color: white;
+
+            border-color:
+                #ff7043;
+
+        }
+
+
+        .map-toggle.active {
+
+            background: #ff5722;
+
+            color: white;
+
+            border-color:
+                #ff5722;
+
+        }
+
+
+        /* =========================
+           MAP
+        ========================== */
+
+        #map2D,
+        #map3D {
+
+            width: 100%;
+
+            height: 560px;
+
+            border-radius: 18px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 5px 25px
+                rgba(0,0,0,.12);
+
+            margin-bottom: 30px;
+
+        }
+
+
+        #map3D {
+
+            display: none;
+
+        }
+
+
+        /* =========================
+           FILTER
+        ========================== */
+
+        .filter-area {
+
+            background: white;
+
+            padding: 20px;
+
+            border-radius: 15px;
+
+            margin-bottom: 20px;
+
+            box-shadow:
+                0 4px 15px
+                rgba(0,0,0,.06);
+
+        }
+
+
+        .filter-area h3 {
+
+            margin-bottom: 12px;
+
+        }
+
+
+        .filters {
+
+            display: flex;
+
+            gap: 10px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+        .filter-btn {
+
+            border:
+                1px solid #ddd;
+
+            background: white;
+
+            padding:
+                9px 15px;
+
+            border-radius: 20px;
+
+            cursor: pointer;
+
+        }
+
+
+        .filter-btn:hover,
+        .filter-btn.active {
+
+            background: #ff5722;
+
+            color: white;
+
+            border-color:
+                #ff5722;
+
+        }
+
+
+        /* =========================
+           PLACES
+        ========================== */
+
+        .places-title {
+
+            font-size: 28px;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        .places-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(270px,1fr)
+                );
+
+            gap: 22px;
+
+        }
+
+
+        .place-card {
+
+            background: white;
+
+            border-radius: 15px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 5px 18px
+                rgba(0,0,0,.08);
+
+            transition: .25s;
+
+        }
+
+
+        .place-card:hover {
+
+            transform:
+                translateY(-5px);
+
+            box-shadow:
+                0 10px 25px
+                rgba(0,0,0,.13);
+
+        }
+
+
+        .place-image {
+
+            width: 100%;
+
+            height: 190px;
+
+            object-fit: cover;
+
+            background: #eee;
+
+        }
+
+
+        .place-content {
+
+            padding: 18px;
+
+        }
+
+
+        .place-content h3 {
+
+            font-size: 21px;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .category {
+
+            display: inline-block;
+
+            background: #fff0e9;
+
+            color: #e64a19;
+
+            padding:
+                5px 10px;
+
+            border-radius: 15px;
+
+            font-size: 12px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .place-content p {
+
+            color: #666;
+
+            line-height: 1.5;
+
+            font-size: 14px;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .place-buttons {
+
+            display: flex;
+
+            gap: 8px;
+
+        }
+
+
+        .map-btn {
+
+            flex: 1;
+
+            text-decoration: none;
+
+            text-align: center;
+
+            background: #ff5722;
+
+            color: white;
+
+            padding: 9px;
+
+            border-radius: 8px;
+
+            font-size: 14px;
+
+        }
+
+
+        .map-btn:hover {
+
+            background: #e64a19;
+
+        }
+
+
+        /* =========================
+           LOADING
+        ========================== */
+
+        .loading {
+
+            text-align: center;
+
+            padding: 30px;
+
+            color: #777;
+
+        }
+
+
+        /* =========================
+           FOOTER
+        ========================== */
+
+        footer {
+
+            margin-top: 50px;
+
+            background: #172033;
+
+            color: white;
+
+            text-align: center;
+
+            padding: 25px;
+
+        }
+
+
+        footer p {
+
+            margin: 6px;
+
+            opacity: .8;
+
+        }
+
+
+        footer a {
+
+            color: #ff9a76;
+
+        }
+
+
+        /* =========================
+           MOBILE
+        ========================== */
+
+        @media(max-width:700px) {
+
+            header h1 {
+
+                font-size: 28px;
+
+            }
+
+
+            .search-box {
+
+                flex-direction: column;
+
+            }
+
+
+            #searchButton {
+
+                padding: 14px;
+
+            }
+
+
+            #suggestions {
+
+                right: 0;
+
+                top: 105px;
+
+            }
+
+
+            #map2D,
+            #map3D {
+
+                height: 450px;
+
+            }
+
+
+            .main {
+
+                padding: 15px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header>
+
+    <h1>
+        🇮🇳 Explore India
+    </h1>
+
+    <p>
+        Search any Indian state and discover
+        famous places, attractions and destinations.
+    </p>
+
+</header>
+
+
+<!-- =====================================================
+     SEARCH SECTION
+===================================================== -->
+
+<section class="search-section">
+
+    <div class="search-container">
+
+        <div class="search-box">
+
+            <input
+                type="text"
+                id="stateSearch"
+                placeholder="Search state... e.g. Rajasthan"
+                autocomplete="off"
+            >
+
+            <button id="searchButton">
+                Search
+            </button>
+
+        </div>
+
+
+        <div id="suggestions"></div>
+
+    </div>
+
+
+    <div
+        class="quick-states"
+        id="quickStates">
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<main class="main">
+
+
+    <!-- STATE INFORMATION -->
+
+    <section class="state-info">
+
+        <h2 id="stateName">
+            Rajasthan
+        </h2>
+
+        <p id="stateDescription">
+            The Land of Kings is famous for magnificent
+            forts, palaces, deserts and colourful cities.
+        </p>
+
+
+        <div class="stats">
+
+            <div class="stat">
+
+                <strong id="placeCount">
+                    0
+                </strong>
+
+                Famous Places
+
+            </div>
+
+
+            <div class="stat">
+
+                <strong id="stateCapital">
+                    Jaipur
+                </strong>
+
+                Capital
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         2D / 3D MAP TOGGLE
+    ================================================== -->
+
+    <div class="map-toolbar">
+
+        <button
+            id="map2DBtn"
+            class="map-toggle active">
+
+            🗺️ 2D Map
+
+        </button>
+
+
+        <button
+            id="map3DBtn"
+            class="map-toggle">
+
+            🌍 3D Map
+
+        </button>
+
+    </div>
+
+
+    <!-- 2D MAP -->
+
+    <div id="map2D"></div>
+
+
+    <!-- 3D MAP -->
+
+    <div id="map3D"></div>
+
+
+    <!-- =================================================
+         CATEGORY FILTER
+    ================================================== -->
+
+    <section class="filter-area">
+
+        <h3>
+            Explore by category
+        </h3>
+
+
+        <div class="filters">
+
+            <button
+                class="filter-btn active"
+                data-category="All">
+
+                All
+
+            </button>
+
+
+            <button
+                class="filter-btn"
+                data-category="Historical">
+
+                🏰 Historical
+
+            </button>
+
+
+            <button
+                class="filter-btn"
+                data-category="Nature">
+
+                🌳 Nature
+
+            </button>
+
+
+            <button
+                class="filter-btn"
+                data-category="Religious">
+
+                🛕 Religious
+
+            </button>
+
+
+            <button
+                class="filter-btn"
+                data-category="Beach">
+
+                🏖️ Beach
+
+            </button>
+
+
+            <button
+                class="filter-btn"
+                data-category="Wildlife">
+
+                🐅 Wildlife
+
+            </button>
+
+
+            <button
+                class="filter-btn"
+                data-category="City">
+
+                🏙️ City
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- =================================================
+         PLACES
+    ================================================== -->
+
+    <h2 class="places-title">
+        Famous Places
+    </h2>
+
+
+    <div
+        id="placesGrid"
+        class="places-grid">
+    </div>
+
+</main>
+
+
+<!-- =====================================================
+     FOOTER
+===================================================== -->
+
+<footer>
+
+    <p>
+        🇮🇳 Explore India Tourism Map
+    </p>
+
+    <p>
+        Map data ©
+        <a
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank">
+            OpenStreetMap contributors
+        </a>
+    </p>
+
+    <p>
+        Images from
+        <a
+            href="https://commons.wikimedia.org/"
+            target="_blank">
+            Wikimedia Commons
+        </a>
+    </p>
+
+</footer>
+
+
+<!-- =====================================================
+     LEAFLET JS
+===================================================== -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<!-- =====================================================
+     CESIUM JS
+===================================================== -->
+
+<script
+    src="https://cesium.com/downloads/cesiumjs/releases/1.136/Build/Cesium/Cesium.js">
+</script>
+
+
+<script>
+
+/* =====================================================
+   INDIAN STATES DATABASE
+===================================================== */
+
+const states = {
+
+
+    "Andhra Pradesh": {
+
+        capital: "Amaravati",
+
+        center: [15.9129,79.7400],
+
+        description:
+        "Explore temples, beaches, valleys and historical destinations across Andhra Pradesh.",
+
+        places: [
+
+            ["Tirupati",13.6288,79.4192,"Religious"],
+
+            ["Visakhapatnam",17.6868,83.2185,"Beach"],
+
+            ["Araku Valley",18.3273,82.8736,"Nature"],
+
+            ["Amaravati",16.5131,80.5165,"Historical"]
+
+        ]
+
+    },
+
+
+    "Arunachal Pradesh": {
+
+        capital:"Itanagar",
+
+        center:[28.2180,94.7278],
+
+        description:
+        "Mountain landscapes, monasteries and spectacular Himalayan destinations.",
+
+        places:[
+
+            ["Tawang",27.5860,91.8594,"Religious"],
+
+            ["Ziro Valley",27.5448,93.8190,"Nature"],
+
+            ["Bomdila",27.2645,92.4244,"Nature"],
+
+            ["Itanagar",27.0844,93.6053,"City"]
+
+        ]
+
+    },
+
+
+    "Assam": {
+
+        capital:"Dispur",
+
+        center:[26.2006,92.9376],
+
+        description:
+        "Famous for wildlife, tea gardens, rivers and cultural attractions.",
+
+        places:[
+
+            ["Kaziranga National Park",26.5775,93.1711,"Wildlife"],
+
+            ["Guwahati",26.1445,91.7362,"City"],
+
+            ["Majuli",27.0016,94.2243,"Nature"],
+
+            ["Sivasagar",26.9843,94.6375,"Historical"]
+
+        ]
+
+    },
+
+
+    "Bihar": {
+
+        capital:"Patna",
+
+        center:[25.0961,85.3131],
+
+        description:
+        "Ancient Buddhist, Jain and historical sites define Bihar's tourism landscape.",
+
+        places:[
+
+            ["Bodh Gaya",24.6961,84.9912,"Religious"],
+
+            ["Nalanda",25.1367,85.4439,"Historical"],
+
+            ["Rajgir",25.0280,85.4200,"Historical"],
+
+            ["Patna",25.5941,85.1376,"City"]
+
+        ]
+
+    },
+
+
+    "Chhattisgarh": {
+
+        capital:"Raipur",
+
+        center:[21.2787,81.8661],
+
+        description:
+        "Waterfalls, caves, forests and tribal culture make Chhattisgarh unique.",
+
+        places:[
+
+            ["Chitrakote Falls",19.2076,81.6941,"Nature"],
+
+            ["Tirathgarh Falls",18.9335,81.8667,"Nature"],
+
+            ["Barnawapara Wildlife Sanctuary",21.3042,82.4497,"Wildlife"],
+
+            ["Raipur",21.2514,81.6296,"City"]
+
+        ]
+
+    },
+
+
+    "Goa": {
+
+        capital:"Panaji",
+
+        center:[15.2993,74.1240],
+
+        description:
+        "India's famous coastal destination with beaches, forts, churches and nightlife.",
+
+        places:[
+
+            ["Baga Beach",15.5557,73.7517,"Beach"],
+
+            ["Calangute Beach",15.5446,73.7552,"Beach"],
+
+            ["Basilica of Bom Jesus",15.5009,73.9116,"Religious"],
+
+            ["Fort Aguada",15.4920,73.7730,"Historical"]
+
+        ]
+
+    },
+
+
+    "Gujarat": {
+
+        capital:"Gandhinagar",
+
+        center:[22.2587,71.1924],
+
+        description:
+        "Discover Gujarat's heritage cities, temples, wildlife and the Great Rann of Kutch.",
+
+        places:[
+
+            ["Statue of Unity",21.8380,73.7191,"Historical"],
+
+            ["Rann of Kutch",23.7337,69.8597,"Nature"],
+
+            ["Somnath Temple",20.8880,70.4010,"Religious"],
+
+            ["Dwarkadhish Temple",22.2376,68.9674,"Religious"],
+
+            ["Gir National Park",21.1243,70.8242,"Wildlife"],
+
+            ["Ahmedabad",23.0225,72.5714,"City"]
+
+        ]
+
+    },
+
+
+    "Haryana": {
+
+        capital:"Chandigarh",
+
+        center:[29.0588,76.0856],
+
+        description:
+        "Explore historical sites, religious destinations and modern cities of Haryana.",
+
+        places:[
+
+            ["Kurukshetra",29.9695,76.8783,"Historical"],
+
+            ["Sultanpur National Park",28.4614,76.8850,"Wildlife"],
+
+            ["Pinjore Gardens",30.7960,76.9182,"Nature"],
+
+            ["Gurugram",28.4595,77.0266,"City"]
+
+        ]
+
+    },
+
+
+    "Himachal Pradesh": {
+
+        capital:"Shimla",
+
+        center:[31.1048,77.1734],
+
+        description:
+        "Mountain resorts, valleys and Himalayan landscapes make Himachal Pradesh popular.",
+
+        places:[
+
+            ["Shimla",31.1048,77.1734,"City"],
+
+            ["Manali",32.2432,77.1892,"Nature"],
+
+            ["Dharamshala",32.2190,76.3234,"Nature"],
+
+            ["Spiti Valley",32.2460,78.0330,"Nature"]
+
+        ]
+
+    },
+
+
+    "Jharkhand": {
+
+        capital:"Ranchi",
+
+        center:[23.6102,85.2799],
+
+        description:
+        "Waterfalls, forests, temples and wildlife attractions.",
+
+        places:[
+
+            ["Hundru Falls",23.4472,85.6224,"Nature"],
+
+            ["Dassam Falls",23.4435,85.4578,"Nature"],
+
+            ["Betla National Park",23.8840,84.1900,"Wildlife"],
+
+            ["Deoghar",24.4921,86.6964,"Religious"]
+
+        ]
+
+    },
+
+
+    "Karnataka": {
+
+        capital:"Bengaluru",
+
+        center:[15.3173,75.7139],
+
+        description:
+        "A mix of heritage monuments, beaches, waterfalls and modern technology cities.",
+
+        places:[
+
+            ["Hampi",15.3350,76.4600,"Historical"],
+
+            ["Mysore Palace",12.3052,76.6552,"Historical"],
+
+            ["Coorg",12.3375,75.8069,"Nature"],
+
+            ["Gokarna",14.5479,74.3188,"Beach"],
+
+            ["Bengaluru",12.9716,77.5946,"City"]
+
+        ]
+
+    },
+
+
+    "Kerala": {
+
+        capital:"Thiruvananthapuram",
+
+        center:[10.8505,76.2711],
+
+        description:
+        "Backwaters, beaches, hill stations and wildlife make Kerala a major tourist destination.",
+
+        places:[
+
+            ["Alappuzha",9.4981,76.3388,"Nature"],
+
+            ["Munnar",10.0889,77.0595,"Nature"],
+
+            ["Kovalam",8.4004,76.9784,"Beach"],
+
+            ["Kochi",9.9312,76.2673,"City"],
+
+            ["Thekkady",9.4630,77.1590,"Wildlife"]
+
+        ]
+
+    },
+
+
+    "Madhya Pradesh": {
+
+        capital:"Bhopal",
+
+        center:[22.9734,78.6569],
+
+        description:
+        "Historic forts, temples, wildlife reserves and UNESCO heritage sites.",
+
+        places:[
+
+            ["Khajuraho",24.8318,79.9199,"Historical"],
+
+            ["Sanchi",23.4793,77.7397,"Historical"],
+
+            ["Kanha National Park",22.3345,80.6115,"Wildlife"],
+
+            ["Bandhavgarh National Park",23.7276,80.9650,"Wildlife"],
+
+            ["Ujjain",23.1765,75.7885,"Religious"]
+
+        ]
+
+    },
+
+
+    "Maharashtra": {
+
+        capital:"Mumbai",
+
+        center:[19.7515,75.7139],
+
+        description:
+        "Maharashtra combines major cities, caves, forts, beaches and hill stations.",
+
+        places:[
+
+            ["Mumbai",19.0760,72.8777,"City"],
+
+            ["Gateway of India",18.9220,72.8347,"Historical"],
+
+            ["Ajanta Caves",20.5519,75.7033,"Historical"],
+
+            ["Ellora Caves",20.0268,75.1793,"Historical"],
+
+            ["Mahabaleshwar",17.9307,73.6477,"Nature"]
+
+        ]
+
+    },
+
+
+    "Manipur": {
+
+        capital:"Imphal",
+
+        center:[24.6637,93.9063],
+
+        description:
+        "Known for Loktak Lake, hills, culture and natural landscapes.",
+
+        places:[
+
+            ["Loktak Lake",24.5500,93.7500,"Nature"],
+
+            ["Imphal",24.8170,93.9368,"City"],
+
+            ["Kangla Fort",24.8077,93.9365,"Historical"],
+
+            ["Keibul Lamjao National Park",24.7000,93.8000,"Wildlife"]
+
+        ]
+
+    },
+
+
+    "Meghalaya": {
+
+        capital:"Shillong",
+
+        center:[25.4670,91.3662],
+
+        description:
+        "Waterfalls, caves, living root bridges and green hills define Meghalaya.",
+
+        places:[
+
+            ["Shillong",25.5788,91.8933,"City"],
+
+            ["Cherrapunji",25.2637,91.7221,"Nature"],
+
+            ["Mawsynram",25.2986,91.5820,"Nature"],
+
+            ["Living Root Bridges",25.2466,91.7287,"Nature"]
+
+        ]
+
+    },
+
+
+    "Mizoram": {
+
+        capital:"Aizawl",
+
+        center:[23.1645,92.9376],
+
+        description:
+        "Mountain landscapes, waterfalls and peaceful hill destinations.",
+
+        places:[
+
+            ["Aizawl",23.7271,92.7176,"City"],
+
+            ["Vantawng Falls",23.2564,92.7287,"Nature"],
+
+            ["Reiek",23.6885,92.6027,"Nature"],
+
+            ["Phawngpui",22.5780,93.0430,"Nature"]
+
+        ]
+
+    },
+
+
+    "Nagaland": {
+
+        capital:"Kohima",
+
+        center:[26.1584,94.5624],
+
+        description:
+        "Hills, tribal culture, festivals and scenic mountain villages.",
+
+        places:[
+
+            ["Kohima",25.6751,94.1086,"City"],
+
+            ["Dzukou Valley",25.5500,94.0500,"Nature"],
+
+            ["Khonoma",25.6475,94.0188,"Nature"],
+
+            ["Kisama Heritage Village",25.6505,94.1004,"Historical"]
+
+        ]
+
+    },
+
+
+    "Odisha": {
+
+        capital:"Bhubaneswar",
+
+        center:[20.9517,85.0985],
+
+        description:
+        "Ancient temples, beaches, lakes and wildlife destinations.",
+
+        places:[
+
+            ["Jagannath Temple",19.8049,85.8179,"Religious"],
+
+            ["Konark Sun Temple",19.8876,86.0945,"Historical"],
+
+            ["Chilika Lake",19.8449,85.4788,"Nature"],
+
+            ["Bhubaneswar",20.2961,85.8245,"City"]
+
+        ]
+
+    },
+
+
+    "Punjab": {
+
+        capital:"Chandigarh",
+
+        center:[31.1471,75.3412],
+
+        description:
+        "Golden Temple, historical sites and vibrant Punjabi culture.",
+
+        places:[
+
+            ["Golden Temple",31.6200,74.8765,"Religious"],
+
+            ["Jallianwala Bagh",31.6200,74.8800,"Historical"],
+
+            ["Wagah Border",31.6048,74.5740,"Historical"],
+
+            ["Amritsar",31.6340,74.8723,"City"]
+
+        ]
+
+    },
+
+
+    "Rajasthan": {
+
+        capital:"Jaipur",
+
+        center:[27.0238,74.2179],
+
+        description:
+        "The Land of Kings is famous for magnificent forts, palaces, deserts, lakes and colourful cities.",
+
+        places:[
+
+            ["Jaipur",26.9124,75.7873,"City"],
+
+            ["Hawa Mahal",26.9239,75.8267,"Historical"],
+
+            ["Amber Fort",26.9855,75.8513,"Historical"],
+
+            ["Jaisalmer Fort",26.9124,70.9131,"Historical"],
+
+            ["Udaipur",24.5854,73.7125,"City"],
+
+            ["Jodhpur",26.2389,73.0243,"City"],
+
+            ["Pushkar",26.4897,74.5511,"Religious"],
+
+            ["Ranthambore National Park",26.0173,76.5026,"Wildlife"]
+
+        ]
+
+    },
+
+
+    "Sikkim": {
+
+        capital:"Gangtok",
+
+        center:[27.5330,88.5122],
+
+        description:
+        "Himalayan landscapes, monasteries, lakes and mountain passes.",
+
+        places:[
+
+            ["Gangtok",27.3389,88.6065,"City"],
+
+            ["Tsomgo Lake",27.3740,88.7636,"Nature"],
+
+            ["Nathula Pass",27.3866,88.8316,"Nature"],
+
+            ["Pelling",27.2310,88.2663,"Nature"]
+
+        ]
+
+    },
+
+
+    "Tamil Nadu": {
+
+        capital:"Chennai",
+
+        center:[11.1271,78.6569],
+
+        description:
+        "Tamil Nadu offers ancient temples, beaches, hill stations and historic architecture.",
+
+        places:[
+
+            ["Chennai",13.0827,80.2707,"City"],
+
+            ["Meenakshi Temple",9.9195,78.1193,"Religious"],
+
+            ["Ooty",11.4102,76.6950,"Nature"],
+
+            ["Mahabalipuram",12.6208,80.1945,"Historical"],
+
+            ["Rameswaram",9.2876,79.3129,"Religious"]
+
+        ]
+
+    },
+
+
+    "Telangana": {
+
+        capital:"Hyderabad",
+
+        center:[18.1124,79.0193],
+
+        description:
+        "Historic forts, temples and the modern city of Hyderabad.",
+
+        places:[
+
+            ["Hyderabad",17.3850,78.4867,"City"],
+
+            ["Charminar",17.3616,78.4747,"Historical"],
+
+            ["Golconda Fort",17.3833,78.4011,"Historical"],
+
+            ["Ramappa Temple",18.2593,79.9438,"Historical"]
+
+        ]
+
+    },
+
+
+    "Tripura": {
+
+        capital:"Agartala",
+
+        center:[23.9408,91.9882],
+
+        description:
+        "Palaces, temples, lakes and green landscapes.",
+
+        places:[
+
+            ["Agartala",23.8315,91.2868,"City"],
+
+            ["Ujjayanta Palace",23.8360,91.2802,"Historical"],
+
+            ["Neermahal",23.5061,91.2699,"Historical"],
+
+            ["Unakoti",24.3190,92.0600,"Historical"]
+
+        ]
+
+    },
+
+
+    "Uttar Pradesh": {
+
+        capital:"Lucknow",
+
+        center:[26.8467,80.9462],
+
+        description:
+        "Home to the Taj Mahal, ancient cities, temples and major historical monuments.",
+
+        places:[
+
+            ["Taj Mahal",27.1751,78.0421,"Historical"],
+
+            ["Varanasi",25.3176,82.9739,"Religious"],
+
+            ["Lucknow",26.8467,80.9462,"City"],
+
+            ["Ayodhya",26.7997,82.2043,"Religious"],
+
+            ["Fatehpur Sikri",27.0945,77.6679,"Historical"]
+
+        ]
+
+    },
+
+
+    "Uttarakhand": {
+
+        capital:"Dehradun",
+
+        center:[30.0668,79.0193],
+
+        description:
+        "Himalayan mountains, pilgrimage sites, valleys and national parks.",
+
+        places:[
+
+            ["Rishikesh",30.0869,78.2676,"Religious"],
+
+            ["Haridwar",29.9457,78.1642,"Religious"],
+
+            ["Nainital",29.3919,79.4542,"Nature"],
+
+            ["Kedarnath",30.7352,79.0669,"Religious"],
+
+            ["Jim Corbett National Park",29.5300,78.7747,"Wildlife"]
+
+        ]
+
+    },
+
+
+    "West Bengal": {
+
+        capital:"Kolkata",
+
+        center:[22.9868,87.8550],
+
+        description:
+        "Explore Kolkata, Darjeeling, Sundarbans and historic cultural destinations.",
+
+        places:[
+
+            ["Kolkata",22.5726,88.3639,"City"],
+
+            ["Darjeeling",27.0410,88.2663,"Nature"],
+
+            ["Sundarbans",21.9497,89.1833,"Wildlife"],
+
+            ["Victoria Memorial",22.5448,88.3426,"Historical"]
+
+        ]
+
+    }
+
+};
+
+
+/* =====================================================
+   2D MAP
+===================================================== */
+
+const map =
+    L.map("map2D")
+    .setView(
+        [22.9734,78.6569],
+        5
+    );
+
+
+L.tileLayer(
+
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+
+    {
+
+        maxZoom: 19,
+
+        attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+
+    }
+
+).addTo(map);
+
+
+/* =====================================================
+   VARIABLES
+===================================================== */
+
+let markers = [];
+
+let currentState =
+    "Rajasthan";
+
+let currentCategory =
+    "All";
+
+
+/* =====================================================
+   CUSTOM MAP ICON
+===================================================== */
+
+const customIcon =
+    L.divIcon({
+
+        className:
+            "custom-marker",
+
+        html: `
+            <div style="
+                background:#ff5722;
+                width:34px;
+                height:34px;
+                border-radius:50% 50% 50% 0;
+                transform:rotate(-45deg);
+                border:3px solid white;
+                box-shadow:0 3px 8px rgba(0,0,0,.35);
+            ">
+            </div>
+        `,
+
+        iconSize:
+            [34,34],
+
+        iconAnchor:
+            [17,34]
+
+    });
+
+
+/* =====================================================
+   CESIUM 3D VIEWER
+===================================================== */
+
+const viewer =
+    new Cesium.Viewer(
+        "map3D",
+        {
+
+            animation: false,
+
+            timeline: false,
+
+            baseLayerPicker: true,
+
+            geocoder: false,
+
+            homeButton: true,
+
+            sceneModePicker: true,
+
+            navigationHelpButton: false,
+
+            fullscreenButton: true,
+
+            infoBox: true,
+
+            selectionIndicator: true
+
+        }
+    );
+
+
+/* =====================================================
+   3D GLOBE START POSITION
+===================================================== */
+
+viewer.camera.setView({
+
+    destination:
+        Cesium.Cartesian3.fromDegrees(
+            78.6569,
+            22.9734,
+            3000000
+        )
+
+});
+
+
+/* =====================================================
+   CLEAR LEAFLET MARKERS
+===================================================== */
+
+function clearMarkers() {
+
+    markers.forEach(
+
+        marker => {
+
+            map.removeLayer(
+                marker
+            );
+
+        }
+
+    );
+
+    markers = [];
+
+}
+
+
+/* =====================================================
+   CLEAR CESIUM MARKERS
+===================================================== */
+
+function clear3DMarkers() {
+
+    viewer.entities.removeAll();
+
+}
+
+
+/* =====================================================
+   WIKIMEDIA IMAGE API
+===================================================== */
+
+async function getWikimediaImage(
+    placeName
+) {
+
+    try {
+
+        const url =
+            "https://commons.wikimedia.org/w/api.php?" +
+
+            new URLSearchParams({
+
+                action: "query",
+
+                generator: "search",
+
+                gsrsearch:
+                    placeName +
+                    " India",
+
+                gsrnamespace: "6",
+
+                gsrlimit: "1",
+
+                prop: "imageinfo",
+
+                iiprop: "url",
+
+                iiurlwidth: "600",
+
+                format: "json",
+
+                origin: "*"
+
+            });
+
+
+        const response =
+            await fetch(url);
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            data.query &&
+            data.query.pages
+        ) {
+
+            const pages =
+                Object.values(
+                    data.query.pages
+                );
+
+
+            if (
+                pages.length > 0 &&
+                pages[0].imageinfo
+            ) {
+
+                return (
+
+                    pages[0]
+                        .imageinfo[0]
+                        .thumburl
+
+                    ||
+
+                    pages[0]
+                        .imageinfo[0]
+                        .url
+
+                );
+
+            }
+
+        }
+
+    }
+
+    catch(error) {
+
+        console.log(
+            "Image API error:",
+            error
+        );
+
+    }
+
+
+    return:
+
+        "https://placehold.co/800x500?text=India+Tourism";
+
+}
+
+
+/* =====================================================
+   SHOW 2D MARKERS
+===================================================== */
+
+function showMarkers(
+    stateName
+) {
+
+    clearMarkers();
+
+
+    const state =
+        states[stateName];
+
+
+    if (!state) return;
+
+
+    state.places.forEach(
+
+        place => {
+
+            const [
+                name,
+                lat,
+                lng,
+                category
+            ] = place;
+
+
+            if (
+
+                currentCategory !==
+                "All"
+
+                &&
+
+                category !==
+                currentCategory
+
+            ) {
+
+                return;
+
+            }
+
+
+            const marker =
+                L.marker(
+
+                    [lat,lng],
+
+                    {
+                        icon:
+                            customIcon
+                    }
+
+                )
+                .addTo(map);
+
+
+            marker.bindPopup(`
+
+                <div style="
+                    min-width:180px;
+                ">
+
+                    <h3 style="
+                        margin-bottom:5px;
+                    ">
+                        ${name}
+                    </h3>
+
+                    <p style="
+                        color:#e64a19;
+                        margin-bottom:8px;
+                    ">
+                        ${category}
+                    </p>
+
+                    <a
+                        href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}"
+                        target="_blank"
+                    >
+                        📍 Open Map
+                    </a>
+
+                </div>
+
+            `);
+
+
+            markers.push(
+                marker
+            );
+
+        }
+
+    );
+
+}
+
+
+/* =====================================================
+   SHOW 3D MARKERS
+===================================================== */
+
+function show3DMarkers(
+    stateName
+) {
+
+    clear3DMarkers();
+
+
+    const state =
+        states[stateName];
+
+
+    if (!state) return;
+
+
+    state.places.forEach(
+
+        place => {
+
+            const [
+                name,
+                lat,
+                lng,
+                category
+            ] = place;
+
+
+            if (
+
+                currentCategory !==
+                "All"
+
+                &&
+
+                category !==
+                currentCategory
+
+            ) {
+
+                return;
+
+            }
+
+
+            viewer.entities.add({
+
+                name:
+                    name,
+
+                position:
+                    Cesium.Cartesian3
+                    .fromDegrees(
+                        lng,
+                        lat,
+                        100
+                    ),
+
+                point: {
+
+                    pixelSize: 14,
+
+                    outlineWidth: 3
+
+                },
+
+                label: {
+
+                    text:
+                        name,
+
+                    font:
+                        "15px Arial",
+
+                    style:
+                        Cesium.LabelStyle
+                        .FILL_AND_OUTLINE,
+
+                    outlineWidth:
+                        3,
+
+                    verticalOrigin:
+                        Cesium.VerticalOrigin
+                        .BOTTOM,
+
+                    pixelOffset:
+                        new Cesium.Cartesian2(
+                            0,
+                            -15
+                        )
+
+                },
+
+                description: `
+
+                    <h2>
+                        ${name}
+                    </h2>
+
+                    <p>
+                        Category:
+                        <b>${category}</b>
+                    </p>
+
+                    <p>
+                        Famous tourist destination
+                        in ${stateName}, India.
+                    </p>
+
+                    <p>
+
+                        <a
+                            href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}"
+                            target="_blank"
+                        >
+                            📍 OpenStreetMap
+                        </a>
+
+                    </p>
+
+                `
+
+            });
+
+        }
+
+    );
+
+}
+
+
+/* =====================================================
+   LOAD PLACE CARDS
+===================================================== */
+
+async function loadPlaces(
+    stateName
+) {
+
+    const grid =
+        document.getElementById(
+            "placesGrid"
+        );
+
+
+    grid.innerHTML = `
+
+        <div class="loading">
+
+            🔄 Loading beautiful places...
+
+        </div>
+
+    `;
+
+
+    const state =
+        states[stateName];
+
+
+    const places =
+        state.places.filter(
+
+            place =>
+
+                currentCategory ===
+                "All"
+
+                ||
+
+                place[3] ===
+                currentCategory
+
+        );
+
+
+    grid.innerHTML = "";
+
+
+    for (
+        const place of places
+    ) {
+
+        const [
+            name,
+            lat,
+            lng,
+            category
+        ] = place;
+
+
+        const card =
+            document.createElement(
+                "div"
+            );
+
+
+        card.className =
+            "place-card";
+
+
+        card.innerHTML = `
+
+            <img
+                class="place-image"
+                alt="${name}"
+                src="https://placehold.co/800x500?text=Loading..."
+            >
+
+
+            <div class="place-content">
+
+                <span class="category">
+
+                    ${category}
+
+                </span>
+
+
+                <h3>
+
+                    ${name}
+
+                </h3>
+
+
+                <p>
+
+                    Explore ${name},
+                    a famous destination
+                    in ${stateName}, India.
+
+                </p>
+
+
+                <div class="place-buttons">
+
+                    <a
+                        class="map-btn"
+                        href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}"
+                        target="_blank"
+                    >
+
+                        📍 View Map
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        grid.appendChild(
+            card
+        );
+
+
+        const image =
+            await getWikimediaImage(
+                name
+            );
+
+
+        card.querySelector(
+            ".place-image"
+        ).src =
+            image;
+
+    }
+
+}
+
+
+/* =====================================================
+   FLY 3D CAMERA TO STATE
+===================================================== */
+
+function fly3DToState(
+    stateName
+) {
+
+    const state =
+        states[stateName];
+
+
+    if (!state) return;
+
+
+    const [
+        lat,
+        lng
+    ] = state.center;
+
+
+    viewer.camera.flyTo({
+
+        destination:
+            Cesium.Cartesian3
+            .fromDegrees(
+                lng,
+                lat,
+                1200000
+            ),
+
+        duration: 2
+
+    });
+
+}
+
+
+/* =====================================================
+   LOAD STATE
+===================================================== */
+
+async function loadState(
+    stateName
+) {
+
+    if (
+        !states[stateName]
+    ) {
+
+        alert(
+            "Please select a valid Indian state."
+        );
+
+        return;
+
+    }
+
+
+    currentState =
+        stateName;
+
+
+    const state =
+        states[stateName];
+
+
+    document.getElementById(
+        "stateName"
+    ).textContent =
+        stateName;
+
+
+    document.getElementById(
+        "stateDescription"
+    ).textContent =
+        state.description;
+
+
+    document.getElementById(
+        "stateCapital"
+    ).textContent =
+        state.capital;
+
+
+    document.getElementById(
+        "placeCount"
+    ).textContent =
+        state.places.length;
+
+
+    /* 2D */
+
+    map.flyTo(
+
+        state.center,
+
+        7,
+
+        {
+            duration:
+                1.5
+        }
+
+    );
+
+
+    showMarkers(
+        stateName
+    );
+
+
+    /* 3D */
+
+    show3DMarkers(
+        stateName
+    );
+
+
+    fly3DToState(
+        stateName
+    );
+
+
+    /* Cards */
+
+    await loadPlaces(
+        stateName
+    );
+
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+function searchState() {
+
+    const input =
+        document.getElementById(
+            "stateSearch"
+        );
+
+
+    const value =
+        input.value
+            .trim()
+            .toLowerCase();
+
+
+    const stateName =
+        Object.keys(states)
+            .find(
+
+                state =>
+
+                    state
+                        .toLowerCase() ===
+                    value
+
+            );
+
+
+    if (stateName) {
+
+        document.getElementById(
+            "suggestions"
+        ).style.display =
+            "none";
+
+
+        loadState(
+            stateName
+        );
+
+    }
+
+    else {
+
+        alert(
+            "Please enter a valid Indian state name."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   SEARCH BUTTON
+===================================================== */
+
+document
+    .getElementById(
+        "searchButton"
+    )
+    .addEventListener(
+        "click",
+        searchState
+    );
+
+
+/* =====================================================
+   ENTER KEY
+===================================================== */
+
+document
+    .getElementById(
+        "stateSearch"
+    )
+    .addEventListener(
+
+        "keydown",
+
+        function(event) {
+
+            if (
+                event.key ===
+                "Enter"
+            ) {
+
+                searchState();
+
+            }
+
+        }
+
+    );
+
+
+/* =====================================================
+   SEARCH SUGGESTIONS
+===================================================== */
+
+document
+    .getElementById(
+        "stateSearch"
+    )
+    .addEventListener(
+
+        "input",
+
+        function() {
+
+            const value =
+                this.value
+                    .trim()
+                    .toLowerCase();
+
+
+            const suggestionBox =
+                document.getElementById(
+                    "suggestions"
+                );
+
+
+            if (!value) {
+
+                suggestionBox.style.display =
+                    "none";
+
+                return;
+
+            }
+
+
+            const matches =
+                Object.keys(states)
+                    .filter(
+
+                        state =>
+
+                            state
+                                .toLowerCase()
+                                .includes(value)
+
+                    );
+
+
+            if (
+                matches.length === 0
+            ) {
+
+                suggestionBox.style.display =
+                    "none";
+
+                return;
+
+            }
+
+
+            suggestionBox.innerHTML =
+                "";
+
+
+            matches.forEach(
+
+                state => {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "suggestion";
+
+
+                    item.innerHTML =
+                        `🇮🇳 ${state}`;
+
+
+                    item.addEventListener(
+
+                        "click",
+
+                        function() {
+
+                            document
+                                .getElementById(
+                                    "stateSearch"
+                                )
+                                .value =
+                                state;
+
+
+                            suggestionBox
+                                .style
+                                .display =
+                                "none";
+
+
+                            loadState(
+                                state
+                            );
+
+                        }
+
+                    );
+
+
+                    suggestionBox
+                        .appendChild(
+                            item
+                        );
+
+                }
+
+            );
+
+
+            suggestionBox.style.display =
+                "block";
+
+        }
+
+    );
+
+
+/* =====================================================
+   QUICK STATES
+===================================================== */
+
+function createQuickStates() {
+
+    const container =
+        document.getElementById(
+            "quickStates"
+        );
+
+
+    const popularStates = [
+
+        "Rajasthan",
+
+        "Gujarat",
+
+        "Maharashtra",
+
+        "Goa",
+
+        "Kerala",
+
+        "Karnataka",
+
+        "Tamil Nadu",
+
+        "Himachal Pradesh",
+
+        "Uttarakhand",
+
+        "Uttar Pradesh"
+
+    ];
+
+
+    popularStates.forEach(
+
+        state => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.className =
+                "state-chip";
+
+
+            button.textContent =
+                state;
+
+
+            button.onclick =
+                function() {
+
+                    document
+                        .getElementById(
+                            "stateSearch"
+                        )
+                        .value =
+                        state;
+
+
+                    loadState(
+                        state
+                    );
+
+                };
+
+
+            container.appendChild(
+                button
+            );
+
+        }
+
+    );
+
+}
+
+
+/* =====================================================
+   CATEGORY FILTER
+===================================================== */
+
+document
+    .querySelectorAll(
+        ".filter-btn"
+    )
+    .forEach(
+
+        button => {
+
+            button.addEventListener(
+
+                "click",
+
+                async function() {
+
+                    document
+                        .querySelectorAll(
+                            ".filter-btn"
+                        )
+                        .forEach(
+
+                            btn =>
+
+                                btn.classList
+                                    .remove(
+                                        "active"
+                                    )
+
+                        );
+
+
+                    this.classList
+                        .add(
+                            "active"
+                        );
+
+
+                    currentCategory =
+                        this.dataset.category;
+
+
+                    showMarkers(
+                        currentState
+                    );
+
+
+                    show3DMarkers(
+                        currentState
+                    );
+
+
+                    await loadPlaces(
+                        currentState
+                    );
+
+                }
+
+            );
+
+        }
+
+    );
+
+
+/* =====================================================
+   2D / 3D TOGGLE
+===================================================== */
+
+document
+    .getElementById(
+        "map2DBtn"
+    )
+    .addEventListener(
+
+        "click",
+
+        function() {
+
+            document.getElementById(
+                "map2D"
+            ).style.display =
+                "block";
+
+
+            document.getElementById(
+                "map3D"
+            ).style.display =
+                "none";
+
+
+            this.classList.add(
+                "active"
+            );
+
+
+            document
+                .getElementById(
+                    "map3DBtn"
+                )
+                .classList.remove(
+                    "active"
+                );
+
+
+            map.invalidateSize();
+
+        }
+
+    );
+
+
+document
+    .getElementById(
+        "map3DBtn"
+    )
+    .addEventListener(
+
+        "click",
+
+        function() {
+
+            document.getElementById(
+                "map2D"
+            ).style.display =
+                "none";
+
+
+            document.getElementById(
+                "map3D"
+            ).style.display =
+                "block";
+
+
+            this.classList.add(
+                "active"
+            );
+
+
+            document
+                .getElementById(
+                    "map2DBtn"
+                )
+                .classList.remove(
+                    "active"
+                );
+
+
+            viewer.resize();
+
+
+            fly3DToState(
+                currentState
+            );
+
+        }
+
+    );
+
+
+/* =====================================================
+   START WEBSITE
+===================================================== */
+
+createQuickStates();
+
+
+loadState(
+    "Rajasthan"
+);
+
+</script>
+
+</body>
+
+</html>

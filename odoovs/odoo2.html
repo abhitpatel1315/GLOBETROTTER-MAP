@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore India 3D - Discover States & Attractions</title>
+
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: #0f172a;
+        }
+
+        /* Fullscreen Map Container */
+        #map-container {
+            width: 100%;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            perspective: 1000px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s ease;
+        }
+
+        /* 3D Pitch Tilt Simulation */
+        .map-3d #map {
+            transform: rotateX(45deg) scale(1.15) translateY(-40px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Floating Glassmorphism Sidebar */
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            width: 380px;
+            max-height: calc(100vh - 40px);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            color: #fff;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand i {
+            font-size: 1.8rem;
+            color: #ff7043;
+        }
+
+        .brand h1 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff7043, #ffb74d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Search Section */
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-wrapper input {
+            width: 100%;
+            padding: 14px 18px 14px 45px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-wrapper input::placeholder {
+            color: #94a3b8;
+        }
+
+        .search-wrapper input:focus {
+            border-color: #ff7043;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.25);
+        }
+
+        .search-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        /* Quick Suggestions Chips */
+        .chips-container {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .chips-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .chips-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .chip {
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            font-size: 0.78rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip:hover {
+            background: #ff7043;
+            border-color: #ff7043;
+        }
+
+        /* Control Buttons */
+        .controls-grid {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+            color: #fff;
+        }
+
+        .btn-3d {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+        }
+
+        .btn-3d.active {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .btn-reset {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+
+        /* Results & Scroll List */
+        .results-header {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        .places-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            max-height: 48vh;
+            padding-right: 4px;
+        }
+
+        .places-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .places-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        /* Individual Card */
+        .place-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .place-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(4px);
+            border-color: rgba(255, 112, 67, 0.5);
+        }
+
+        .place-card img {
+            width: 95px;
+            height: 85px;
+            object-fit: cover;
+        }
+
+        .place-details {
+            padding: 8px 10px 8px 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .place-name {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .place-type {
+            font-size: 0.75rem;
+            color: #ff7043;
+            margin-top: 2px;
+            text-transform: capitalize;
+        }
+
+        .place-desc {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin-top: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Status Loader */
+        .status-msg {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            padding: 20px 0;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #ff7043;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Leaflet Popup Styling */
+        .leaflet-popup-content-wrapper {
+            background: #0f172a;
+            color: #fff;
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .leaflet-popup-tip {
+            background: #0f172a;
+        }
+
+        .popup-card img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+        }
+
+        .popup-content {
+            padding: 12px;
+        }
+
+        .popup-content h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+            color: #f8fafc;
+        }
+
+        .popup-content p {
+            font-size: 0.78rem;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .popup-content a {
+            font-size: 0.75rem;
+            color: #ff7043;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .popup-content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar UI -->
+    <div class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-compass"></i>
+            <h1>India Travel 3D</h1>
+        </div>
+
+        <!-- Search Input -->
+        <div class="search-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search any Indian State (e.g. Rajasthan)..." onkeydown="if(event.key === 'Enter') executeSearch()">
+        </div>
+
+        <!-- Quick Suggestions -->
+        <div class="chips-container">
+            <div class="chip" onclick="quickSearch('Rajasthan')">🏰 Rajasthan</div>
+            <div class="chip" onclick="quickSearch('Kerala')">🌴 Kerala</div>
+            <div class="chip" onclick="quickSearch('Goa')">🏖️ Goa</div>
+            <div class="chip" onclick="quickSearch('Himachal Pradesh')">🏔️ Himachal</div>
+            <div class="chip" onclick="quickSearch('Maharashtra')">🏛️ Maharashtra</div>
+        </div>
+
+        <!-- Mode Controls -->
+        <div class="controls-grid">
+            <button class="btn btn-3d" id="btn3D" onclick="toggle3DView()">
+                <i class="fa-solid fa-cube"></i> <span id="text3D">Enable 3D View</span>
+            </button>
+            <button class="btn btn-reset" onclick="resetMapView()">
+                <i class="fa-solid fa-arrows-to-dot"></i> Reset
+            </button>
+        </div>
+
+        <!-- Search Results Listing -->
+        <div class="results-header" id="resultsTitle">Famous Attractions</div>
+        <div class="places-list" id="placesList">
+            <div class="status-msg">Search a state above to uncover famous tourist spots!</div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS Library -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Initialize Map
+        const map = L.map('map', {
+            center: [22.5937, 78.9629], // Center of India
+            zoom: 5,
+            zoomControl: false
+        });
+
+        // Add Leaflet Zoom Control to Top Right
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // Dark Modern Tile Layer
+        const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        let activeMarkers = [];
+        let is3DMode = false;
+
+        // Fallback images pool for locations without Wikipedia photos
+        const fallbackImages = [
+            "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=500&q=80",
+            "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=500&q=80",
+            "https://images.unsplash.com/photo-1588083949474-77b70e3325d8?auto=format&fit=crop&w=500&q=80",
+            "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=500&q=80",
+            "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=500&q=80"
+        ];
+
+        function getRandomImage(index) {
+            return fallbackImages[index % fallbackImages.length];
+        }
+
+        // Search trigger
+        function executeSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                fetchStatePlaces(query);
+            }
+        }
+
+        function quickSearch(stateName) {
+            document.getElementById('searchInput').value = stateName;
+            fetchStatePlaces(stateName);
+        }
+
+        // Toggle 3D visual tilt mode
+        function toggle3DView() {
+            const container = document.getElementById('map-container');
+            const btn = document.getElementById('btn3D');
+            const btnText = document.getElementById('text3D');
+
+            is3DMode = !is3DMode;
+
+            if (is3DMode) {
+                container.classList.add('map-3d');
+                btn.classList.add('active');
+                btnText.innerText = "2D View";
+            } else {
+                container.classList.remove('map-3d');
+                btn.classList.remove('active');
+                btnText.innerText = "Enable 3D View";
+            }
+            setTimeout(() => map.invalidateSize(), 300);
+        }
+
+        // Reset map camera
+        function resetMapView() {
+            map.flyTo([22.5937, 78.9629], 5, { duration: 1.5 });
+            clearMarkers();
+            document.getElementById('searchInput').value = '';
+            document.getElementById('placesList').innerHTML = '<div class="status-msg">Search a state above to uncover famous tourist spots!</div>';
+            document.getElementById('resultsTitle').innerText = "Famous Attractions";
+        }
+
+        function clearMarkers() {
+            activeMarkers.forEach(m => map.removeLayer(m));
+            activeMarkers = [];
+        }
+
+        // Fetch state bounds & places using Free Nominatim & Wikimedia APIs
+        async function fetchStatePlaces(stateName) {
+            const listEl = document.getElementById('placesList');
+            listEl.innerHTML = `<div class="status-msg"><div class="spinner"></div><br><br>Searching attractions in ${stateName}...</div>`;
+            clearMarkers();
+
+            try {
+                // 1. Geocode state coordinates
+                const geoUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(stateName + ', India')}`;
+                const geoRes = await fetch(geoUrl);
+                const geoData = await geoRes.json();
+
+                if (!geoData || geoData.length === 0) {
+                    listEl.innerHTML = `<div class="status-msg">State not found! Please check spelling.</div>`;
+                    return;
+                }
+
+                const stateLat = parseFloat(geoData[0].lat);
+                const stateLon = parseFloat(geoData[0].lon);
+
+                // Zoom to state
+                map.flyTo([stateLat, stateLon], 7, { duration: 1.5 });
+
+                // 2. Fetch Tourist Attractions from Wikipedia / Wikidata Free Geo API
+                const wikiGeoUrl = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=100000&gscoord=${stateLat}|${stateLon}&gslimit=15&format=json&origin=*`;
+                const wikiRes = await fetch(wikiGeoUrl);
+                const wikiData = await wikiRes.json();
+
+                const places = wikiData.query.geosearch || [];
+
+                if (places.length === 0) {
+                    listEl.innerHTML = `<div class="status-msg">No major places found in this area. Try another search!</div>`;
+                    return;
+                }
+
+                document.getElementById('resultsTitle').innerText = `Places in ${stateName} (${places.length})`;
+                listEl.innerHTML = '';
+
+                // Fetch image details for each place
+                for (let i = 0; i < places.length; i++) {
+                    const place = places[i];
+                    const photoDetails = await getWikiPhoto(place.pageid, i);
+
+                    const markerIcon = L.divIcon({
+                        className: 'custom-pin',
+                        html: `<div style="background-color: #ff7043; width: 14px; height: 14px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+
+                    const marker = L.marker([place.lat, place.lon], { icon: markerIcon }).addTo(map);
+
+                    const popupContent = `
+                        <div class="popup-card">
+                            <img src="${photoDetails.img}" alt="${place.title}">
+                            <div class="popup-content">
+                                <h3>${place.title}</h3>
+                                <p>${photoDetails.extract || 'Famous historical & cultural destination in ' + stateName + '.'}</p>
+                                <a href="https://en.wikipedia.org/?curid=${place.pageid}" target="_blank">Read Article on Wikipedia &rarr;</a>
+                            </div>
+                        </div>
+                    `;
+
+                    marker.bindPopup(popupContent);
+                    activeMarkers.push(marker);
+
+                    // Add place card element in list
+                    const card = document.createElement('div');
+                    card.className = 'place-card';
+                    card.innerHTML = `
+                        <img src="${photoDetails.img}" alt="${place.title}">
+                        <div class="place-details">
+                            <div class="place-name">${place.title}</div>
+                            <div class="place-type"><i class="fa-solid fa-location-dot"></i> Distance: ${(place.dist / 1000).toFixed(1)} km</div>
+                            <div class="place-desc">${photoDetails.extract || 'Popular tourist point of interest.'}</div>
+                        </div>
+                    `;
+
+                    card.onclick = () => {
+                        map.flyTo([place.lat, place.lon], 13, { duration: 1.2 });
+                        marker.openPopup();
+                    };
+
+                    listEl.appendChild(card);
+                }
+
+            } catch (err) {
+                console.error(err);
+                listEl.innerHTML = `<div class="status-msg">Failed to load places. Please check your connection.</div>`;
+            }
+        }
+
+        // Fetch Wiki thumbnail & summary text
+        async function getWikiPhoto(pageId, index) {
+            try {
+                const url = `https://en.wikipedia.org/w/api.php?action=query&pageids=${pageId}&prop=pageimages|extracts&pithumbsize=500&exintro=1&explaintext=1&exchars=120&format=json&origin=*`;
+                const res = await fetch(url);
+                const data = await res.json();
+                const page = data.query.pages[pageId];
+
+                const img = page.thumbnail ? page.thumbnail.source : getRandomImage(index);
+                const extract = page.extract ? page.extract : '';
+
+                return { img, extract };
+            } catch {
+                return { img: getRandomImage(index), extract: '' };
+            }
+        }
+
+        // Auto Load Rajasthan when first opening the web app
+        window.onload = () => {
+            quickSearch('Rajasthan');
+        };
+    </script>
+</body>
+</html>

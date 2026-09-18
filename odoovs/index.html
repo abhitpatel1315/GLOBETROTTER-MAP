@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D India Travel & Famous Places Explorer</title>
+    
+    <!-- MapLibre GL CSS & JS (Free 3D Map Library) -->
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Glassmorphism Sidebar */
+        .sidebar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            width: 360px;
+            max-height: calc(100vh - 40px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title i {
+            color: #ff5722;
+        }
+
+        /* Search Input */
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .search-box input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        /* 3D Controls Toggle */
+        .controls-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #1e293b;
+            color: #ffffff;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #334155;
+        }
+
+        .btn-3d {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+
+        .btn-3d:hover {
+            opacity: 0.9;
+        }
+
+        /* Place Cards List */
+        .places-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .place-card {
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            gap: 10px;
+        }
+
+        .place-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .place-card img {
+            width: 90px;
+            height: 80px;
+            object-fit: cover;
+        }
+
+        .place-info {
+            padding: 8px 8px 8px 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .place-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .place-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Popup Customization */
+        .maplibregl-popup-content {
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            max-width: 260px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .popup-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+
+        .popup-body {
+            padding: 12px;
+        }
+
+        .popup-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .popup-text {
+            font-size: 0.8rem;
+            color: #475569;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="title">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>India 3D Explorer</span>
+        </div>
+
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="stateSearch" placeholder="Search state (e.g., Rajasthan, Kerala)..." onkeyup="filterState()">
+        </div>
+
+        <div class="controls-row">
+            <button class="btn btn-3d" onclick="toggle3D()">
+                <i class="fa-solid fa-cube"></i> Toggle 3D
+            </button>
+            <button class="btn" onclick="resetView()">
+                <i class="fa-solid fa-arrows-to-dot"></i> Reset
+            </button>
+        </div>
+
+        <div id="placesContainer" class="places-list">
+            <!-- Places will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        // Database of famous places state-wise with locations and high quality images
+        const stateData = {
+            "rajasthan": {
+                center: [74.2179, 27.0238],
+                zoom: 6.5,
+                places: [
+                    {
+                        name: "Hawa Mahal, Jaipur",
+                        coords: [75.8267, 26.9239],
+                        image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=600&q=80",
+                        description: "The Palace of Breeze made with red and pink sandstone."
+                    },
+                    {
+                        name: "Mehrangarh Fort, Jodhpur",
+                        coords: [73.0185, 26.2978],
+                        image: "https://images.unsplash.com/photo-1588083949474-77b70e3325d8?auto=format&fit=crop&w=600&q=80",
+                        description: "One of the largest and grandest forts in India built in 1459."
+                    },
+                    {
+                        name: "City Palace, Udaipur",
+                        coords: [73.6835, 24.5764],
+                        image: "https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=600&q=80",
+                        description: "A majestic palace complex on the banks of Lake Pichola."
+                    },
+                    {
+                        name: "Jaisalmer Fort",
+                        coords: [70.9126, 26.9124],
+                        image: "https://images.unsplash.com/photo-1617824076738-89c0a6b1c3e3?auto=format&fit=crop&w=600&q=80",
+                        description: "A massive living golden sandstone fort amidst the Thar Desert."
+                    }
+                ]
+            },
+            "kerala": {
+                center: [76.2711, 10.8505],
+                zoom: 7,
+                places: [
+                    {
+                        name: "Alleppey Backwaters",
+                        coords: [76.3388, 9.4981],
+                        image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=600&q=80",
+                        description: "Famous for tranquil houseboat cruises through palm-fringed canals."
+                    },
+                    {
+                        name: "Munnar Tea Gardens",
+                        coords: [77.0597, 10.0889],
+                        image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=600&q=80",
+                        description: "Breathtaking hill station with sprawling tea plantations."
+                    }
+                ]
+            },
+            "maharashtra": {
+                center: [75.7139, 19.7515],
+                zoom: 6.5,
+                places: [
+                    {
+                        name: "Gateway of India, Mumbai",
+                        coords: [72.8347, 18.9220],
+                        image: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=600&q=80",
+                        description: "Iconic arch monument built in the early 20th century."
+                    },
+                    {
+                        name: "Ajanta & Ellora Caves",
+                        coords: [75.7033, 20.5519],
+                        image: "https://images.unsplash.com/photo-1627894483216-2138af692e32?auto=format&fit=crop&w=600&q=80",
+                        description: "Ancient rock-cut cave monuments featuring masterpiece sculptures."
+                    }
+                ]
+            },
+            "uttar pradesh": {
+                center: [80.9462, 26.8467],
+                zoom: 6.5,
+                places: [
+                    {
+                        name: "Taj Mahal, Agra",
+                        coords: [78.0421, 27.1751],
+                        image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=600&q=80",
+                        description: "World wonder and iconic white marble mausoleum."
+                    },
+                    {
+                        name: "Varanasi Ghats",
+                        coords: [83.0068, 25.3176],
+                        image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=600&q=80",
+                        description: "Spiritual capital of India located on the banks of River Ganges."
+                    }
+                ]
+            }
+        };
+
+        // Initialize MapLibre GL Map (Free vector map source)
+        const map = new maplibreGL.Map({
+            container: 'map',
+            style: 'https://demotiles.maplibre.org/style.json', // Free public map vector style
+            center: [78.9629, 20.5937], // India Center
+            zoom: 4.5,
+            pitch: 0,
+            bearing: 0
+        });
+
+        // Add Zoom Navigation Controls
+        map.addControl(new maplibreGL.NavigationControl());
+
+        let activeMarkers = [];
+        let is3D = false;
+
+        // Function to filter and search state
+        function filterState() {
+            const input = document.getElementById('stateSearch').value.toLowerCase().trim();
+            const container = document.getElementById('placesContainer');
+            
+            // Clear existing markers
+            clearMarkers();
+            container.innerHTML = '';
+
+            if (stateData[input]) {
+                const state = stateData[input];
+
+                // Fly map to selected state location
+                map.flyTo({
+                    center: state.center,
+                    zoom: state.zoom,
+                    pitch: is3D ? 50 : 0,
+                    essential: true
+                });
+
+                // Render famous places
+                state.places.forEach(place => {
+                    // Create visual map marker
+                    const popupHTML = `
+                        <img class="popup-img" src="${place.image}" alt="${place.name}" />
+                        <div class="popup-body">
+                            <div class="popup-title">${place.name}</div>
+                            <div class="popup-text">${place.description}</div>
+                        </div>
+                    `;
+
+                    const popup = new maplibreGL.Popup({ offset: 25 }).setHTML(popupHTML);
+
+                    const marker = new maplibreGL.Marker({ color: '#ff5722' })
+                        .setLngLat(place.coords)
+                        .setPopup(popup)
+                        .addTo(map);
+
+                    activeMarkers.push(marker);
+
+                    // Add place card to HTML sidebar
+                    const card = document.createElement('div');
+                    card.className = 'place-card';
+                    card.innerHTML = `
+                        <img src="${place.image}" alt="${place.name}">
+                        <div class="place-info">
+                            <div class="place-title">${place.name}</div>
+                            <div class="place-desc">${place.description}</div>
+                        </div>
+                    `;
+
+                    // Zoom to place on click
+                    card.onclick = () => {
+                        map.flyTo({
+                            center: place.coords,
+                            zoom: 12,
+                            pitch: 55,
+                            speed: 1.2
+                        });
+                        marker.togglePopup();
+                    };
+
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        // Remove markers from map
+        function clearMarkers() {
+            activeMarkers.forEach(marker => marker.remove());
+            activeMarkers = [];
+        }
+
+        // Toggle 3D Map Pitch View
+        function toggle3D() {
+            is3D = !is3D;
+            map.easeTo({
+                pitch: is3D ? 60 : 0,
+                bearing: is3D ? -20 : 0,
+                duration: 1000
+            });
+        }
+
+        // Reset map to default view
+        function resetView() {
+            map.flyTo({
+                center: [78.9629, 20.5937],
+                zoom: 4.5,
+                pitch: 0,
+                bearing: 0
+            });
+            clearMarkers();
+            document.getElementById('placesContainer').innerHTML = '';
+            document.getElementById('stateSearch').value = '';
+        }
+
+        // Pre-load Rajasthan on initial open as requested
+        window.onload = () => {
+            document.getElementById('stateSearch').value = 'rajasthan';
+            filterState();
+        };
+    </script>
+</body>
+</html>
